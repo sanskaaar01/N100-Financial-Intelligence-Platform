@@ -6,7 +6,7 @@ Universal Excel Loader
 
 from pathlib import Path
 import pandas as pd
-
+from ..etl.validator import DataValidator
 
 class ExcelLoader:
 

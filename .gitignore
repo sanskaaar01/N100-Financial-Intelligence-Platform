@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+
+# SQLite database
+db/*.db
+db/*.sqlite
+db/*.sqlite3
+
+# Generated output
+data/output/
+
+# Debug / temporary files
+check_duplicates.py
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
