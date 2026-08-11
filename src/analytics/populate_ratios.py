@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import math
 
 DB = "db/nifty100.db"

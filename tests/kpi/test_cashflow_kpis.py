@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 
 from src.analytics.cashflow_kpis import (
     free_cash_flow,

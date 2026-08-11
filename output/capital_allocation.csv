@@ -1,0 +1,110 @@
+﻿company_id,company_name,sector,capital_allocation_label,cfo_quality_label,cfo_quality_score,capex_label,capex_intensity_pct,fcf_cagr_5yr,fcf_conversion_pct,distress_flag,deleveraging_flag
+ABB,Abbott India Ltd,Unknown,Deleveraging,High Quality,5.755974245820067,Capital Intensive,84.51017267909045,,91.17402164862615,False,True
+ADANIENSOL,Adani Energy Solutions Ltd,Unknown,Reinvestor,High Quality,4.389232826387428,Capital Intensive,29.7645571144698,,91.5551839464883,False,False
+ADANIENT,Adani Enterprises Ltd,Unknown,Reinvestor,High Quality,3.670388196608809,Capital Intensive,19.46360232729385,,-253.5232383808096,False,False
+ADANIGREEN,Adani Green Energy Ltd,Unknown,Accrual Risk,Accrual Risk,-0.0235291557522574,Capital Intensive,228.4164859002169,,-1059.285714285714,False,False
+ADANIPORTS,"Adani Ports & Special Economic Zone Ltd
+",Unknown,Reinvestor,High Quality,2.044971741395748,Capital Intensive,25.33787578151324,37.78973446864202,101.8015794669299,False,False
+ADANIPOWER,Adani Power Ltd,Unknown,Cash Distributor,High Quality,1.3223405880104,Moderate,6.913467458441739,30.71118060790721,84.74242642469633,False,False
+AMBUJACEM,Ambuja Cements Ltd,Unknown,Reinvestor,High Quality,1.290622481343834,Capital Intensive,26.96320868516285,,-69.54411143942592,False,False
+APOLLOHOSP,"Apollo Hospitals
+Chain of Indian private hospitals",Unknown,Reinvestor,High Quality,3.488462128395108,Capital Intensive,8.064431502177449,14.5722412524085,40.96256684491978,False,False
+ASIANPAINT,"Asian Paints
+Indian Multi-National Paint and Coating Manufacturing Company",Unknown,Balanced,Moderate,0.9321931577763527,Moderate,7.17847584166784,18.03587045363451,63.97984886649874,False,False
+ATGL,Adani Total Gas Ltd,Unknown,Accrual Risk,Accrual Risk,,Asset Light,,,,False,False
+AXISBANK,Axis Bank Ltd,Unknown,Distress Signal,High Quality,4.970634991862178,Capital Intensive,8.229937185125584,,-58.54953541691806,True,False
+BAJAJ-AUTO,Bajaj Auto Ltd,Unknown,Cash Distributor,Moderate,0.7566632844852987,Asset Light,0.1604635613995989,23.98235048893478,84.14634146341463,False,False
+BAJAJFINSV,Bajaj Finserv Ltd,Unknown,Distress Signal,Accrual Risk,-2.993664365617242,Capital Intensive,9.929155115870342,,-510.6380250080153,True,False
+BAJAJHLDNG,Bajaj Holdings & Investment Ltd,Unknown,Deleveraging,Accrual Risk,0.3401882095534591,Capital Intensive,27.73207990599295,25.86754704441738,19.94568906992532,False,True
+BAJFINANCE,Bajaj Finance Ltd,Unknown,Distress Signal,Accrual Risk,-3.758378367355445,Capital Intensive,13.04482281888962,,-553.1174313196319,True,False
+BANKBARODA,Bank of Baroda,Unknown,Distress Signal,High Quality,3.473910944163455,Asset Light,1.085496583008811,,-40.06041655625629,True,False
+BEL,Bharat Electronics Ltd,Unknown,Reinvestor,High Quality,1.431409743175088,Capital Intensive,29.22834024077363,,-31.74404015056462,False,False
+BHARTIARTL,Bharti Airtel Ltd,Unknown,Reinvestor,High Quality,3.334066956185566,Capital Intensive,34.06342094384659,,324.9474176209395,False,False
+BHEL,"Bharat Heavy Electricals Limited
+",Unknown,Distress Signal,Accrual Risk,-2.210785656327544,Moderate,5.570669233666764,,-844.6808510638299,True,False
+BOSCHLTD,Bosch Ltd,Unknown,Deleveraging,High Quality,1.073233884013101,Asset Light,1.691875411012136,-8.2232541048765,61.68674698795181,False,True
+BPCL,Bharat Petroleum Corporation Ltd,Unknown,Cash Generator,High Quality,2.486510576648653,Asset Light,2.348002490609999,,94.62377601548829,False,False
+BRITANNIA,Britannia Industries Ltd,Unknown,Cash Generator,High Quality,1.046539262159868,Asset Light,2.844534557815016,58.59345160881666,142.9240862230553,False,False
+CANBK,Canara Bank,Unknown,Cash Generator,High Quality,4.069631350415008,Asset Light,1.583438141857961,-5.337862323751841,86.33205635997663,False,False
+CHOLAFIN,Cholamandalam Investment & Finance Company Ltd,Unknown,Distress Signal,Accrual Risk,-6.195324924972415,Capital Intensive,14.89850232218337,,-1126.842105263158,True,False
+CIPLA,"Cipla Ltd
+",Unknown,Deleveraging,High Quality,1.412222814051014,Capital Intensive,11.56979902227051,228.7503659034452,27.73230621088108,False,True
+COALINDIA,Coal India Ltd,Unknown,Balanced,High Quality,1.021649532530456,Moderate,3.151963126387679,9.987217411819094,36.43929460247799,False,False
+DABUR,Dabur India Ltd,Unknown,Balanced,High Quality,1.076638358025418,Moderate,7.828119961302805,-10.72050757546945,57.53727222528989,False,False
+DIVISLAB,Divis Laboratories Ltd,Unknown,Balanced,Moderate,0.9293273749797601,Moderate,3.4289356277884,29.82307104777742,62.0,False,False
+DLF,DLF Ltd,Unknown,Capital Intensive,Moderate,0.9464904798153178,Capital Intensive,23.79025984129454,-13.16733127538306,37.07782672540382,False,False
+DMART,Avenue Supermarts Ltd,Unknown,Balanced,High Quality,1.068669197812137,Moderate,4.859319931481227,,10.96214511041009,False,False
+DRREDDY,Dr Reddys Laboratories Ltd,Unknown,Reinvestor,High Quality,1.342175174052774,Capital Intensive,14.40148513084145,-24.68901184980715,9.12513445679455,False,False
+EICHERMOT,Eicher Motors Ltd,Unknown,Deleveraging,Moderate,0.998535742862353,Capital Intensive,17.13836477987421,-0.552520013345259,22.24443889027743,False,True
+GAIL,GAIL (India) Ltd,Unknown,Deleveraging,Moderate,0.9900484324735057,Moderate,6.174377758429158,13.81411233198175,44.02706250631122,False,True
+GODREJCP,Godrej Consumer Products Ltd,Unknown,Accrual Risk,Accrual Risk,0.1256199406068272,Capital Intensive,24.36861520998865,,-243.3155080213904,False,False
+GRASIM,Grasim Industries Ltd,Unknown,Distress Signal,Moderate,0.6128140684668629,Capital Intensive,17.6472384675289,,-340.8523070723353,True,False
+HAL,Hindustan Aeronautics Ltd,Unknown,Reinvestor,High Quality,1.963075416512269,Capital Intensive,21.10529607320365,,23.88413429888084,False,False
+HAVELLS,Havells India Ltd,Unknown,Reinvestor,High Quality,1.053161526848905,Capital Intensive,8.703604088219473,-13.35487386941974,26.35719905586152,False,False
+HCLTECH,HCL Technologies Ltd,Unknown,Cash Distributor,High Quality,1.371283984612863,Moderate,6.012027694631208,22.6161818543015,100.8274984086569,False,False
+HDFCBANK,HDFC Bank Ltd,Unknown,Accrual Risk,Accrual Risk,0.2288453818917975,Moderate,5.852303374945795,,54.50142101885523,False,False
+HDFCLIFE,HDFC Life Insurance Company Ltd,Unknown,Reinvestor,High Quality,5.829360645996696,Capital Intensive,13.41518692970182,,-183.7992376111817,False,False
+HEROMOTOCO,"Hero MotoCorp Ltd
+",Unknown,Deleveraging,High Quality,1.212099228421657,Moderate,4.837386541056921,5.842708892319703,82.70978086584714,False,True
+HINDALCO,Hindalco Industries Ltd,Unknown,Cash Distributor,High Quality,2.765676634898685,Moderate,6.606254804085903,8.463802473474736,96.39586410635155,False,False
+HINDUNILVR,"Hindustan Unilever Ltd
+",Unknown,Reinvestor,High Quality,1.156176111154535,Capital Intensive,8.601525138942742,13.60175699592767,98.66757440186734,False,False
+ICICIBANK,ICICI Bank Ltd,Unknown,Reinvestor,High Quality,3.872438044945258,Capital Intensive,90.7350986734873,-7.360467011220518,27.22814175039604,False,False
+ICICIGI,ICICI Lombard General Insurance Company Ltd,Unknown,Deleveraging,High Quality,1.458965013017095,Capital Intensive,9.37667789329819,32.27903093325808,25.32569046378322,False,True
+ICICIPRULI,ICICI Prudential Life Insurance Company Ltd,Unknown,Deleveraging,High Quality,1.926589234229299,Capital Intensive,8.216417331989769,-51.26166654001434,12.33842538190364,False,True
+INDIGO,Interglobe Aviation Ltd,Unknown,Cash Distributor,Accrual Risk,-14.3446629715772,Capital Intensive,17.06577266922094,71.56520119992503,115.3912085221011,False,False
+INDUSINDBK,IndusInd Bank Ltd,Unknown,Cash Generator,High Quality,2.610541715850155,Asset Light,1.366179942292559,,-195.1731843575419,False,False
+INFY,Infosys Ltd,Unknown,Balanced,High Quality,1.037696383329751,Moderate,3.314244810307802,7.201272446841034,76.6420298689424,False,False
+IOC,"Indian Oil Corporation
+",Unknown,Cash Distributor,Moderate,0.7306430873244374,Moderate,4.052800791393595,,91.83058779917054,False,False
+IRCTC,Indian Railway Catering & Tourism Corporation Ltd,Unknown,Deleveraging,Moderate,0.9036900006508211,Moderate,5.035128805620609,35.50477381816852,60.03600360036003,False,True
+IRFC,Indian Railway Finance Corporation Ltd,Unknown,Deleveraging,Accrual Risk,-10.79612430906241,Asset Light,0.03002439482079189,,123.3000623830318,False,True
+ITC,"ITC Ltd
+",Unknown,Cash Distributor,Moderate,0.9385693291996491,Asset Light,2.205571077808822,21.64259503734181,90.31853886559685,False,False
+JINDALSTEL,Jindal Steel & Power Ltd,Unknown,Accrual Risk,Accrual Risk,-2.800059220273794,Capital Intensive,16.57067958851333,,-39.30674743395591,False,False
+JIOFIN,Jio Financial Services Ltd,Unknown,Reinvestor,High Quality,32.93394633705156,Capital Intensive,77.68194070080862,-19.25925925925925,47.53894080996885,False,False
+JSWENERGY,JSW Energy Ltd,Unknown,Reinvestor,High Quality,2.627478907361001,Capital Intensive,71.36514017064252,,-113.7971014492754,False,False
+JSWSTEEL,JSW Steel Ltd,Unknown,Reinvestor,High Quality,2.776890673714168,Capital Intensive,8.266573717472543,,-26.62431739663435,False,False
+KOTAKBANK,"Kotak Mahindra Bank Ltd
+",Unknown,Reinvestor,High Quality,1.475807344465532,Capital Intensive,15.85966534487971,,37.14928896941745,False,False
+LICI,Life Insurance Corporation of India,Unknown,Cash Generator,High Quality,9.679944954625286,Asset Light,2.986999477520373,-48.21728841371581,2.084759018476879,False,False
+LODHA,Macrotech Developers Ltd,Unknown,Reinvestor,High Quality,13.30991666183648,Capital Intensive,28.5672741372625,,-27.99227799227799,False,False
+LT,Larsen & Toubro Ltd,Unknown,Cash Generator,High Quality,1.446423006390699,Asset Light,0.9854689683555468,,131.5044703158165,False,False
+LTIM,LTIMindtree Ltd,Unknown,Reinvestor,High Quality,1.016292459052437,Capital Intensive,11.03133710617451,22.08444037386408,38.21155943293348,False,False
+M&M,"Mahindra & Mahindra Ltd
+",Unknown,Distress Signal,High Quality,3.315557726769421,Moderate,4.037302808495951,,-91.64629176854116,True,False
+MARUTI,Maruti Suzuki India Ltd,Unknown,Reinvestor,High Quality,1.132404458201285,Capital Intensive,8.363997800617518,10.02778351575371,36.59549228944247,False,False
+MOTHERSON,Samvardhana Motherson International Ltd,Unknown,Balanced,High Quality,3.099669015457905,Moderate,6.732055283102987,-1.428567128563307,30.62913907284768,False,False
+NAUKRI,Info Edge (India) Ltd,Unknown,Accrual Risk,Accrual Risk,-1.461538977694653,Capital Intensive,33.59621451104101,,-25.21008403361344,False,False
+NESTLEIND,Nestle India Ltd,Unknown,Balanced,High Quality,1.114334186875221,Moderate,5.070919078461917,4.320098447494725,74.70124586829392,False,False
+NHPC,"NHPC Ltd
+",Unknown,Reinvestor,High Quality,1.269192330394576,Capital Intensive,61.96013289036545,-18.15959230256928,24.08142999006951,False,False
+NTPC,NTPC Ltd,Unknown,Reinvestor,High Quality,2.260902906732557,Capital Intensive,18.00606159069137,,40.52128258016126,False,False
+ONGC,Oil & Natural Gas Corpn Ltd,Unknown,Reinvestor,High Quality,2.864497231939887,Capital Intensive,9.672537521390066,11.57315479777334,73.65895518467276,False,False
+PFC,Power Finance Corporation Ltd,Unknown,Distress Signal,Accrual Risk,-3.034796145263461,Moderate,3.725357345805831,,-382.5592381240316,True,False
+PIDILITIND,Pidilite Industries Ltd,Unknown,Deleveraging,High Quality,1.187241128670088,Capital Intensive,14.28571428571428,23.53017525858574,54.66514024041214,False,True
+PNB,Punjab National Bank,Unknown,Distress Signal,Accrual Risk,-1.218498224295726,Asset Light,1.380827946637326,,-321.5572785846893,True,False
+POWERGRID,Power Grid Corporation of India Ltd,Unknown,Deleveraging,High Quality,2.355395296760425,Capital Intensive,28.60633030124555,39.69769001638159,155.2430488666281,False,True
+RECLTD,REC Ltd,Unknown,Distress Signal,Accrual Risk,-3.856165997377703,Moderate,3.853357745648926,,-421.0250972074938,True,False
+RELIANCE,"Reliance Industries Ltd
+",Unknown,Deleveraging,High Quality,1.614759496636935,Capital Intensive,12.63357288488512,,57.20956719817768,False,True
+SBILIFE,SBI Life Insurance Company Ltd,Unknown,Reinvestor,High Quality,15.301624757997,Capital Intensive,23.6544231293754,,-110.8236536430834,False,False
+SBIN,State Bank of India,Unknown,Cash Generator,High Quality,1.053882118994846,Asset Light,0.791458802474561,-9.42032384113779,26.10758811095294,False,False
+SHREECEM,Shree Cement Ltd,Unknown,Cash Distributor,High Quality,1.902333713281173,Moderate,6.909994639637445,7.24045892978542,111.3098672821696,False,False
+SHRIRAMFIN,"Shriram Finance Ltd
+",Unknown,Distress Signal,Accrual Risk,-2.612821054742972,Asset Light,0.7090249532813014,,-423.8275442627382,True,False
+SIEMENS,Siemens Ltd,Unknown,Balanced,Moderate,0.8407752345640682,Asset Light,2.257194244604317,53.28962129081927,42.97277409860191,False,False
+SUNPHARMA,Sun Pharmaceuticals Industries Ltd,Unknown,Deleveraging,High Quality,1.756670086239323,Asset Light,1.573293193393406,43.2382586094409,118.3350676378772,False,True
+TATACONSUM,Tata Consumer Products Ltd,Unknown,Reinvestor,High Quality,1.665494399678571,Capital Intensive,12.56740760226226,-37.04887150623013,2.139917695473251,False,False
+TATAMOTORS,Tata Motors Ltd,Unknown,Deleveraging,High Quality,1.927704811215581,Moderate,5.2022250232915,,141.8964378910303,False,True
+TATAPOWER,"Tata Power Company Ltd
+",Unknown,Reinvestor,High Quality,3.866291981206616,Capital Intensive,14.69023092320461,-3.666968259247616,83.38785046728971,False,False
+TATASTEEL,"Tata Steel Ltd
+",Unknown,Cash Distributor,High Quality,4.441136197317482,Moderate,6.219373306395661,,123.1771894093686,False,False
+TCS,Tata Consultancy Services Ltd,Unknown,Cash Generator,High Quality,1.036410569304885,Asset Light,2.528508507926756,10.77084245698778,109.3928284778412,False,False
+TECHM,Tech Mahindra Ltd,Unknown,Deleveraging,High Quality,1.544725287120112,Asset Light,2.534810370028464,16.78825509724664,211.0137672090113,False,True
+TITAN,"Titan Company Ltd
+",Unknown,Balanced,Moderate,0.9180593506856702,Asset Light,0.3699788583509513,27.55515729109304,43.07780320366133,False,False
+TORNTPHARM,Torrent Pharmaceuticals Ltd,Unknown,Deleveraging,High Quality,1.831031132947694,Asset Light,1.491424310216257,14.88463449987261,187.5603864734299,False,True
+TRENT,Trent Ltd,Unknown,Balanced,High Quality,1.182341546078665,Moderate,4.105050505050505,,56.93974272173325,False,False
+TVSMOTOR,TVS Motor Company Ltd,Unknown,Distress Signal,Accrual Risk,-0.7508952449451183,Asset Light,2.557159279601482,,-126.7003934794829,True,False
