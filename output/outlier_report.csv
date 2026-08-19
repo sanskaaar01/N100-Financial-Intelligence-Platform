@@ -1,0 +1,16 @@
+﻿company_id,company_name,broad_sector,metric,value,z_score,severity
+ADANIGREEN,Adani Green Energy Ltd,Unknown,revenue_cagr_5yr,34.976172926382844,3.017,High
+BAJAJHLDNG,Bajaj Holdings & Investment Ltd,Unknown,net_profit_margin_pct,432.7262044653349,9.083,High
+BAJAJHLDNG,Bajaj Holdings & Investment Ltd,Unknown,interest_coverage,3764.5,7.487,High
+BAJFINANCE,Bajaj Finance Ltd,Unknown,interest_coverage,2689.1666666666665,5.273,High
+BANKBARODA,Bank of Baroda,Unknown,debt_to_equity,12.143718727289434,3.658,High
+BEL,Bharat Electronics Ltd,Unknown,return_on_equity_pct,4744.047619047619,7.251,High
+BEL,Bharat Electronics Ltd,Unknown,asset_turnover,125.88819875776397,7.722,High
+CANBK,Canara Bank,Unknown,debt_to_equity,14.867419925542423,4.61,High
+CANBK,Canara Bank,Unknown,pat_cagr_5yr,85.7752850068174,3.186,High
+HAL,Hindustan Aeronautics Ltd,Unknown,return_on_equity_pct,3816.5829145728644,5.795,High
+HAL,Hindustan Aeronautics Ltd,Unknown,asset_turnover,67.51333333333334,4.038,High
+INDIGO,Interglobe Aviation Ltd,Unknown,asset_turnover,56.38625204582652,3.336,High
+INDIGO,Interglobe Aviation Ltd,Unknown,pat_cagr_5yr,120.69250867467933,4.883,High
+INDIGO,Interglobe Aviation Ltd,Unknown,eps_cagr_5yr,121.23568222761168,5.521,High
+TRENT,Trent Ltd,Unknown,revenue_cagr_5yr,36.30691600183056,3.198,High

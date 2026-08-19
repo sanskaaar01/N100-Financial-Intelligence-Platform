@@ -1,0 +1,6 @@
+cluster,cluster_name,return_on_equity_pct,debt_to_equity,revenue_cagr_5yr,fcf_cagr_5yr,operating_profit_margin_pct
+0,Stable / Moderate,17.353,4.528,17.826,-5.338,46.977
+1,Growth,17.699,0.123,10.326,11.573,19.349
+2,Quality,13.577,0.001,31.612,25.868,91.774
+3,High Quality / Compounders,4280.315,0.565,9.732,,28.505
+4,Value / Lower Quality,15.236,3.909,16.308,35.034,75.592
