@@ -1,7 +1,8 @@
-﻿from pathlib import Path
-import sqlite3
-import pandas as pd
+﻿import sqlite3
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = PROJECT_ROOT / "db" / "nifty100.db"
@@ -29,7 +30,7 @@ def load_companies():
             FROM companies
             ORDER BY id
             """,
-            conn
+            conn,
         )
     finally:
         conn.close()
@@ -37,9 +38,7 @@ def load_companies():
 
 def load_cashflow_intelligence():
     if not CASHFLOW_XLSX.exists():
-        raise FileNotFoundError(
-            f"Missing {CASHFLOW_XLSX}"
-        )
+        raise FileNotFoundError(f"Missing {CASHFLOW_XLSX}")
 
     return pd.read_excel(CASHFLOW_XLSX)
 
@@ -54,7 +53,7 @@ def load_financial_ratios():
             FROM financial_ratios
             ORDER BY company_id, year
             """,
-            conn
+            conn,
         )
     finally:
         conn.close()
@@ -74,22 +73,13 @@ def determine_pattern(row):
     if deleveraging:
         return "Deleveraging"
 
-    if (
-        cfo_quality == "High Quality"
-        and capex_label == "Capital Intensive"
-    ):
+    if cfo_quality == "High Quality" and capex_label == "Capital Intensive":
         return "Reinvestor"
 
-    if (
-        cfo_quality == "High Quality"
-        and capex_label == "Asset Light"
-    ):
+    if cfo_quality == "High Quality" and capex_label == "Asset Light":
         return "Cash Generator"
 
-    if (
-        pd.notna(fcf_conversion)
-        and fcf_conversion > 80
-    ):
+    if pd.notna(fcf_conversion) and fcf_conversion > 80:
         return "Cash Distributor"
 
     if cfo_quality == "Accrual Risk":
@@ -107,16 +97,9 @@ def build_current_allocation():
 
     df = intelligence.copy()
 
-    df["capital_allocation_label"] = df.apply(
-        determine_pattern,
-        axis=1
-    )
+    df["capital_allocation_label"] = df.apply(determine_pattern, axis=1)
 
-    result = df.merge(
-        companies,
-        on="company_id",
-        how="left"
-    )
+    result = df.merge(companies, on="company_id", how="left")
 
     preferred_columns = [
         "company_id",
@@ -133,39 +116,30 @@ def build_current_allocation():
         "deleveraging_flag",
     ]
 
-    columns = [
-        c for c in preferred_columns
-        if c in result.columns
-    ]
+    columns = [c for c in preferred_columns if c in result.columns]
 
     result = result[columns]
 
-    result = result.sort_values(
-        "company_id"
-    ).reset_index(drop=True)
+    result = result.sort_values("company_id").reset_index(drop=True)
 
     return result
 
 
 def build_distribution(result):
     distribution = (
-        result[
-            "capital_allocation_label"
-        ]
+        result["capital_allocation_label"]
         .value_counts()
         .rename_axis("capital_allocation_label")
         .reset_index(name="company_count")
     )
 
     distribution["percentage"] = (
-        distribution["company_count"]
-        / len(result)
-        * 100
+        distribution["company_count"] / len(result) * 100
     ).round(2)
 
-    distribution = distribution.sort_values(
-        "capital_allocation_label"
-    ).reset_index(drop=True)
+    distribution = distribution.sort_values("capital_allocation_label").reset_index(
+        drop=True
+    )
 
     return distribution
 
@@ -195,43 +169,24 @@ def build_pattern_changes():
         "cash_from_operations_cr",
     ]
 
-    available = [
-        c for c in required
-        if c in ratios.columns
-    ]
+    available = [c for c in required if c in ratios.columns]
 
     ratios = ratios[available].copy()
 
     rows = []
 
-    for company_id, group in ratios.groupby(
-        "company_id"
-    ):
+    for company_id, group in ratios.groupby("company_id"):
         group = group.copy()
 
         def numeric(column):
             if column not in group.columns:
-                return pd.Series(
-                    np.nan,
-                    index=group.index
-                )
-            return pd.to_numeric(
-                group[column],
-                errors="coerce"
-            )
+                return pd.Series(np.nan, index=group.index)
+            return pd.to_numeric(group[column], errors="coerce")
 
-        group["debt_to_equity"] = numeric(
-            "debt_to_equity"
-        )
-        group["free_cash_flow_cr"] = numeric(
-            "free_cash_flow_cr"
-        )
-        group["capex_cr"] = numeric(
-            "capex_cr"
-        )
-        group["cash_from_operations_cr"] = numeric(
-            "cash_from_operations_cr"
-        )
+        group["debt_to_equity"] = numeric("debt_to_equity")
+        group["free_cash_flow_cr"] = numeric("free_cash_flow_cr")
+        group["capex_cr"] = numeric("capex_cr")
+        group["cash_from_operations_cr"] = numeric("cash_from_operations_cr")
 
         group = group.sort_values("year")
 
@@ -241,29 +196,17 @@ def build_pattern_changes():
         previous = group.iloc[-2]
         latest = group.iloc[-1]
 
-        previous_cfo = previous[
-            "cash_from_operations_cr"
-        ]
+        previous_cfo = previous["cash_from_operations_cr"]
 
-        latest_cfo = latest[
-            "cash_from_operations_cr"
-        ]
+        latest_cfo = latest["cash_from_operations_cr"]
 
-        previous_fcf = previous[
-            "free_cash_flow_cr"
-        ]
+        previous_fcf = previous["free_cash_flow_cr"]
 
-        latest_fcf = latest[
-            "free_cash_flow_cr"
-        ]
+        latest_fcf = latest["free_cash_flow_cr"]
 
-        previous_de = previous[
-            "debt_to_equity"
-        ]
+        previous_de = previous["debt_to_equity"]
 
-        latest_de = latest[
-            "debt_to_equity"
-        ]
+        latest_de = latest["debt_to_equity"]
 
         previous_pattern = "Balanced"
         latest_pattern = "Balanced"
@@ -276,35 +219,19 @@ def build_pattern_changes():
         ):
             latest_pattern = "Distress Signal"
 
-        elif (
-            pd.notna(previous_de)
-            and pd.notna(latest_de)
-            and latest_de < previous_de
-        ):
+        elif pd.notna(previous_de) and pd.notna(latest_de) and latest_de < previous_de:
             latest_pattern = "Deleveraging"
 
-        elif (
-            pd.notna(latest_fcf)
-            and latest_fcf > 0
-        ):
+        elif pd.notna(latest_fcf) and latest_fcf > 0:
             latest_pattern = "Cash Generator"
 
-        if (
-            pd.notna(previous_cfo)
-            and previous_cfo < 0
-        ):
+        if pd.notna(previous_cfo) and previous_cfo < 0:
             previous_pattern = "Distress Signal"
 
-        elif (
-            pd.notna(previous_de)
-            and previous_de > 0
-        ):
+        elif pd.notna(previous_de) and previous_de > 0:
             previous_pattern = "Deleveraging"
 
-        elif (
-            pd.notna(previous_fcf)
-            and previous_fcf > 0
-        ):
+        elif pd.notna(previous_fcf) and previous_fcf > 0:
             previous_pattern = "Cash Generator"
 
         if previous_pattern != latest_pattern:
@@ -330,70 +257,33 @@ def main():
     print("Companies:", len(result))
 
     if len(result) != 92:
-        raise ValueError(
-            f"Expected 92 companies, found {len(result)}"
-        )
+        raise ValueError(f"Expected 92 companies, found {len(result)}")
 
     if result["company_id"].nunique() != 92:
-        raise ValueError(
-            "Company IDs are not unique."
-        )
+        raise ValueError("Company IDs are not unique.")
 
-    result.to_csv(
-        CAPITAL_CSV,
-        index=False,
-        encoding="utf-8-sig"
-    )
+    result.to_csv(CAPITAL_CSV, index=False, encoding="utf-8-sig")
 
-    distribution = build_distribution(
-        result
-    )
+    distribution = build_distribution(result)
 
-    distribution.to_csv(
-        DISTRIBUTION_CSV,
-        index=False,
-        encoding="utf-8-sig"
-    )
+    distribution.to_csv(DISTRIBUTION_CSV, index=False, encoding="utf-8-sig")
 
     changes = build_pattern_changes()
 
-    changes.to_csv(
-        PATTERN_CHANGES_CSV,
-        index=False,
-        encoding="utf-8-sig"
-    )
+    changes.to_csv(PATTERN_CHANGES_CSV, index=False, encoding="utf-8-sig")
 
     # Update the Day 31 Excel with the
     # final Day 32 allocation column.
     if CASHFLOW_XLSX.exists():
-        original = pd.read_excel(
-            CASHFLOW_XLSX
-        )
+        original = pd.read_excel(CASHFLOW_XLSX)
 
-        allocation = result[
-            [
-                "company_id",
-                "capital_allocation_label"
-            ]
-        ]
+        allocation = result[["company_id", "capital_allocation_label"]]
 
-        original = original.drop(
-            columns=[
-                "capital_allocation_label"
-            ],
-            errors="ignore"
-        )
+        original = original.drop(columns=["capital_allocation_label"], errors="ignore")
 
-        original = original.merge(
-            allocation,
-            on="company_id",
-            how="left"
-        )
+        original = original.merge(allocation, on="company_id", how="left")
 
-        original.to_excel(
-            CASHFLOW_XLSX,
-            index=False
-        )
+        original.to_excel(CASHFLOW_XLSX, index=False)
 
     print()
     print("========================================")
@@ -402,17 +292,10 @@ def main():
 
     print()
     print("Capital Allocation Distribution:")
-    print(
-        distribution.to_string(
-            index=False
-        )
-    )
+    print(distribution.to_string(index=False))
 
     print()
-    print(
-        "Pattern changes detected:",
-        len(changes)
-    )
+    print("Pattern changes detected:", len(changes))
 
     print()
     print("Capital Allocation CSV:")
@@ -445,11 +328,9 @@ def main():
         "Capital Intensive",
     }
 
-    assert set(
-        result["capital_allocation_label"]
-        .dropna()
-        .unique()
-    ).issubset(valid_patterns)
+    assert set(result["capital_allocation_label"].dropna().unique()).issubset(
+        valid_patterns
+    )
 
     assert distribution["company_count"].sum() == 92
 

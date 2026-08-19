@@ -2,7 +2,6 @@ from pathlib import Path
 
 import streamlit as st
 
-
 # ============================================================
 # PAGE CONFIG
 # ============================================================
@@ -28,9 +27,7 @@ PAGES_DIR = BASE_DIR / "pages"
 # ============================================================
 
 st.title("📊 Nifty 100 Analytics")
-st.caption(
-    "Financial Intelligence Platform — Dashboard & Valuation"
-)
+st.caption("Financial Intelligence Platform — Dashboard & Valuation")
 
 
 # ============================================================

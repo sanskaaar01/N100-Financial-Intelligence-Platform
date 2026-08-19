@@ -1,10 +1,9 @@
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 
 DB_PATH = Path("db/nifty100.db")
 OUTPUT_DIR = Path("reports/radar_charts")
@@ -156,9 +155,7 @@ def load_all_companies():
 
 
 def metric_axis_value(group, metric):
-    rows = group[
-        group["metric"] == metric
-    ]
+    rows = group[group["metric"] == metric]
 
     if rows.empty:
         return np.nan
@@ -177,9 +174,7 @@ def build_company_profile(
     peer_data,
     composite_scores,
 ):
-    company_data = peer_data[
-        peer_data["company_id"] == company_id
-    ]
+    company_data = peer_data[peer_data["company_id"] == company_id]
 
     profile = {}
 
@@ -218,9 +213,7 @@ def build_company_profile(
         "Revenue CAGR 5yr",
     )
 
-    score_rows = composite_scores[
-        composite_scores["company_id"] == company_id
-    ]
+    score_rows = composite_scores[composite_scores["company_id"] == company_id]
 
     if score_rows.empty:
         profile["Composite Score"] = 50.0
@@ -233,9 +226,7 @@ def build_company_profile(
         if pd.isna(score):
             profile["Composite Score"] = 50.0
         else:
-            profile["Composite Score"] = float(
-                np.clip(score, 0, 100)
-            )
+            profile["Composite Score"] = float(np.clip(score, 0, 100))
 
     return profile
 
@@ -245,9 +236,9 @@ def build_peer_average(
     peer_data,
     composite_scores,
 ):
-    companies = peer_data[
-        peer_data["peer_group_name"] == peer_group
-    ]["company_id"].unique()
+    companies = peer_data[peer_data["peer_group_name"] == peer_group][
+        "company_id"
+    ].unique()
 
     profiles = []
 
@@ -262,25 +253,14 @@ def build_peer_average(
         )
 
     if not profiles:
-        return {
-            axis: 50.0
-            for axis in AXES
-        }
+        return {axis: 50.0 for axis in AXES}
 
     average = {}
 
     for axis in AXES:
-        values = [
-            profile[axis]
-            for profile in profiles
-            if not pd.isna(profile[axis])
-        ]
+        values = [profile[axis] for profile in profiles if not pd.isna(profile[axis])]
 
-        average[axis] = (
-            float(np.mean(values))
-            if values
-            else 50.0
-        )
+        average[axis] = float(np.mean(values)) if values else 50.0
 
     return average
 
@@ -295,26 +275,16 @@ def make_radar_chart(
 ):
     labels = AXES
 
+    company_values = [company_profile.get(axis, 50.0) for axis in labels]
+
+    average_values = [peer_average.get(axis, 50.0) for axis in labels]
+
     company_values = [
-        company_profile.get(axis, 50.0)
-        for axis in labels
+        50.0 if pd.isna(value) else float(value) for value in company_values
     ]
 
     average_values = [
-        peer_average.get(axis, 50.0)
-        for axis in labels
-    ]
-
-    company_values = [
-        50.0 if pd.isna(value)
-        else float(value)
-        for value in company_values
-    ]
-
-    average_values = [
-        50.0 if pd.isna(value)
-        else float(value)
-        for value in average_values
+        50.0 if pd.isna(value) else float(value) for value in average_values
     ]
 
     number_axes = len(labels)
@@ -358,11 +328,7 @@ def make_radar_chart(
         average_values,
         linestyle="--",
         linewidth=2,
-        label=(
-            "Nifty 100 Average"
-            if standalone
-            else f"{peer_group} Average"
-        ),
+        label=("Nifty 100 Average" if standalone else f"{peer_group} Average"),
     )
 
     ax.set_xticks(angles[:-1])
@@ -374,9 +340,7 @@ def make_radar_chart(
 
     ax.set_ylim(0, 100)
 
-    ax.set_yticks(
-        [20, 40, 60, 80, 100]
-    )
+    ax.set_yticks([20, 40, 60, 80, 100])
 
     ax.set_yticklabels(
         ["20", "40", "60", "80", "100"],
@@ -417,20 +381,13 @@ def generate_peer_group_charts(
 ):
     generated = 0
 
-    peer_groups = (
-        peer_data["peer_group_name"]
-        .dropna()
-        .unique()
-    )
+    peer_groups = peer_data["peer_group_name"].dropna().unique()
 
     for peer_group in peer_groups:
 
-        group_companies = (
-            peer_data[
-                peer_data["peer_group_name"] == peer_group
-            ]["company_id"]
-            .unique()
-        )
+        group_companies = peer_data[peer_data["peer_group_name"] == peer_group][
+            "company_id"
+        ].unique()
 
         average = build_peer_average(
             peer_group,
@@ -447,10 +404,7 @@ def generate_peer_group_charts(
                 composite_scores,
             )
 
-            output_path = (
-                OUTPUT_DIR
-                / f"{company_id}_radar.png"
-            )
+            output_path = OUTPUT_DIR / f"{company_id}_radar.png"
 
             make_radar_chart(
                 company_id,
@@ -471,17 +425,11 @@ def generate_standalone_charts(
     composite_scores,
     all_companies,
 ):
-    assigned = set(
-        peer_data["company_id"].dropna()
-    )
+    assigned = set(peer_data["company_id"].dropna())
 
-    all_ids = set(
-        all_companies["company_id"].dropna()
-    )
+    all_ids = set(all_companies["company_id"].dropna())
 
-    unassigned = sorted(
-        all_ids - assigned
-    )
+    unassigned = sorted(all_ids - assigned)
 
     if not unassigned:
         return 0
@@ -506,56 +454,35 @@ def generate_standalone_charts(
         for axis in AXES:
 
             values = [
-                profile[axis]
-                for profile in all_profiles
-                if not pd.isna(profile[axis])
+                profile[axis] for profile in all_profiles if not pd.isna(profile[axis])
             ]
 
-            nifty_average[axis] = (
-                float(np.mean(values))
-                if values
-                else 50.0
-            )
+            nifty_average[axis] = float(np.mean(values)) if values else 50.0
 
     else:
 
-        nifty_average = {
-            axis: 50.0
-            for axis in AXES
-        }
+        nifty_average = {axis: 50.0 for axis in AXES}
 
     generated = 0
 
     for company_id in unassigned:
 
-        profile = {
-            axis: 50.0
-            for axis in AXES
-        }
+        profile = {axis: 50.0 for axis in AXES}
 
-        score_rows = composite_scores[
-            composite_scores["company_id"] == company_id
-        ]
+        score_rows = composite_scores[composite_scores["company_id"] == company_id]
 
         if not score_rows.empty:
 
             score = pd.to_numeric(
-                score_rows.iloc[0][
-                    "composite_quality_score"
-                ],
+                score_rows.iloc[0]["composite_quality_score"],
                 errors="coerce",
             )
 
             if not pd.isna(score):
 
-                profile["Composite Score"] = float(
-                    np.clip(score, 0, 100)
-                )
+                profile["Composite Score"] = float(np.clip(score, 0, 100))
 
-        output_path = (
-            OUTPUT_DIR
-            / f"{company_id}_radar.png"
-        )
+        output_path = OUTPUT_DIR / f"{company_id}_radar.png"
 
         make_radar_chart(
             company_id,
@@ -654,9 +581,7 @@ def run_radar_engine():
     print()
     print("Sample files:")
 
-    files = sorted(
-        OUTPUT_DIR.glob("*_radar.png")
-    )
+    files = sorted(OUTPUT_DIR.glob("*_radar.png"))
 
     for file in files[:10]:
         print(" ", file.name)

@@ -1,12 +1,9 @@
-import pytest
-import pandas as pd
-
-from src.etl.normaliser import normalize_year, normalize_ticker
-
+from src.etl.normaliser import normalize_ticker, normalize_year
 
 # ============================================================
 # normalize_ticker() - 15 tests
 # ============================================================
+
 
 def test_ticker_uppercase():
     assert normalize_ticker("tcs") == "TCS"
@@ -71,6 +68,7 @@ def test_ticker_multiple_internal_spaces():
 # ============================================================
 # normalize_year() - 20 tests
 # ============================================================
+
 
 def test_year_mar_24():
     assert normalize_year("Mar-24") == "2024-03"

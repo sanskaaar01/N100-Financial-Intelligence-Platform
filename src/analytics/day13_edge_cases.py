@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+
 import pandas as pd
 
 DB = Path("db/nifty100.db")
@@ -59,11 +60,7 @@ def roce(operating_profit, equity_capital, reserves, borrowings):
     ):
         return None
 
-    capital_employed = (
-        equity_capital +
-        reserves +
-        borrowings
-    )
+    capital_employed = equity_capital + reserves + borrowings
 
     if capital_employed <= 0:
         return None
@@ -85,15 +82,9 @@ def main():
     if not COMPANIES.exists():
         raise FileNotFoundError(COMPANIES)
 
-    companies = pd.read_excel(
-        COMPANIES,
-        header=1
-    )
+    companies = pd.read_excel(COMPANIES, header=1)
 
-    companies.columns = [
-        str(c).strip().lower()
-        for c in companies.columns
-    ]
+    companies.columns = [str(c).strip().lower() for c in companies.columns]
 
     required = {
         "id",
@@ -104,9 +95,7 @@ def main():
     missing = required - set(companies.columns)
 
     if missing:
-        raise ValueError(
-            f"Missing columns in companies.xlsx: {missing}"
-        )
+        raise ValueError(f"Missing columns in companies.xlsx: {missing}")
 
     source = {}
 
@@ -123,16 +112,11 @@ def main():
 
     try:
 
-        financials = {
-            str(r[0]).strip()
-            for r in conn.execute(
-                """
+        financials = {str(r[0]).strip() for r in conn.execute("""
                 SELECT DISTINCT company_id
                 FROM sectors
                 WHERE LOWER(TRIM(broad_sector)) = 'financials'
-                """
-            ).fetchall()
-        }
+                """).fetchall()}
 
         print()
         print("Financials companies:", len(financials))
@@ -157,7 +141,7 @@ def main():
                 ON fr.company_id = pl.company_id
                 AND fr.year = pl.year
             """,
-            conn
+            conn,
         )
 
         print()
@@ -181,8 +165,7 @@ def main():
                 continue
 
             flag = high_leverage_flag(
-                de,
-                "Financials" if cid in financials else "Other"
+                de, "Financials" if cid in financials else "Other"
             )
 
             if cid in financials:
@@ -235,41 +218,30 @@ def main():
             source_roce = source[cid]["roce"]
             source_roe = source[cid]["roe"]
 
-            if (
-                computed_roce is not None
-                and source_roce is not None
-            ):
+            if computed_roce is not None and source_roce is not None:
 
-                diff = abs(
-                    computed_roce -
-                    source_roce
-                )
+                diff = abs(computed_roce - source_roce)
 
                 if diff > 5:
 
-                    anomalies.append({
-                        "company": cid,
-                        "year": year,
-                        "metric": "ROCE",
-                        "computed": computed_roce,
-                        "source": source_roce,
-                        "difference": diff,
-                        "category": "data source issue",
-                        "explanation":
-                            "Computed ROCE differs from "
+                    anomalies.append(
+                        {
+                            "company": cid,
+                            "year": year,
+                            "metric": "ROCE",
+                            "computed": computed_roce,
+                            "source": source_roce,
+                            "difference": diff,
+                            "category": "data source issue",
+                            "explanation": "Computed ROCE differs from "
                             "companies.xlsx source value by "
-                            "more than 5 percentage points."
-                    })
+                            "more than 5 percentage points.",
+                        }
+                    )
 
-            if (
-                computed_roe is not None
-                and source_roe is not None
-            ):
+            if computed_roe is not None and source_roe is not None:
 
-                diff = abs(
-                    computed_roe -
-                    source_roe
-                )
+                diff = abs(computed_roe - source_roe)
 
                 if diff > 5:
 
@@ -286,16 +258,18 @@ def main():
                             "more than 5 percentage points."
                         )
 
-                    anomalies.append({
-                        "company": cid,
-                        "year": year,
-                        "metric": "ROE",
-                        "computed": computed_roe,
-                        "source": source_roe,
-                        "difference": diff,
-                        "category": "data source issue",
-                        "explanation": explanation
-                    })
+                    anomalies.append(
+                        {
+                            "company": cid,
+                            "year": year,
+                            "metric": "ROE",
+                            "computed": computed_roe,
+                            "source": source_roe,
+                            "difference": diff,
+                            "category": "data source issue",
+                            "explanation": explanation,
+                        }
+                    )
 
         # --------------------------------------------------------
         # Write final log
@@ -303,37 +277,22 @@ def main():
 
         with open(LOG, "w", encoding="utf-8") as out:
 
-            out.write(
-                "SPRINT 2 — DAY 13 RATIO EDGE CASE LOG\n"
-            )
+            out.write("SPRINT 2 — DAY 13 RATIO EDGE CASE LOG\n")
             out.write("=" * 70 + "\n\n")
 
-            out.write(
-                f"Financials companies: {len(financials)}\n"
-            )
+            out.write(f"Financials companies: {len(financials)}\n")
+
+            out.write(f"Financials D/E > 5: {financials_high}\n")
+
+            out.write(f"Financials incorrectly flagged: " f"{financials_flagged}\n")
+
+            out.write(f"Non-Financials D/E > 5: " f"{nonfinancial_high}\n")
 
             out.write(
-                f"Financials D/E > 5: {financials_high}\n"
+                f"Non-Financials correctly flagged: " f"{nonfinancial_flagged}\n\n"
             )
 
-            out.write(
-                f"Financials incorrectly flagged: "
-                f"{financials_flagged}\n"
-            )
-
-            out.write(
-                f"Non-Financials D/E > 5: "
-                f"{nonfinancial_high}\n"
-            )
-
-            out.write(
-                f"Non-Financials correctly flagged: "
-                f"{nonfinancial_flagged}\n\n"
-            )
-
-            out.write(
-                f"Total anomalies: {len(anomalies)}\n\n"
-            )
+            out.write(f"Total anomalies: {len(anomalies)}\n\n")
 
             out.write("ANOMALIES\n")
             out.write("-" * 70 + "\n\n")
@@ -346,37 +305,21 @@ def main():
 
             for a in anomalies:
 
-                out.write(
-                    f"Company: {a['company']}\n"
-                )
+                out.write(f"Company: {a['company']}\n")
 
-                out.write(
-                    f"Year: {a['year']}\n"
-                )
+                out.write(f"Year: {a['year']}\n")
 
-                out.write(
-                    f"Metric: {a['metric']}\n"
-                )
+                out.write(f"Metric: {a['metric']}\n")
 
-                out.write(
-                    f"Computed: {a['computed']:.4f}\n"
-                )
+                out.write(f"Computed: {a['computed']:.4f}\n")
 
-                out.write(
-                    f"Source: {a['source']:.4f}\n"
-                )
+                out.write(f"Source: {a['source']:.4f}\n")
 
-                out.write(
-                    f"Difference: {a['difference']:.4f}\n"
-                )
+                out.write(f"Difference: {a['difference']:.4f}\n")
 
-                out.write(
-                    f"Category: {a['category']}\n"
-                )
+                out.write(f"Category: {a['category']}\n")
 
-                out.write(
-                    f"Explanation: {a['explanation']}\n"
-                )
+                out.write(f"Explanation: {a['explanation']}\n")
 
                 out.write("\n" + "-" * 70 + "\n\n")
 
@@ -385,15 +328,9 @@ def main():
         print("✅ DAY 13 COMPLETE")
         print("=" * 70)
 
-        print("ROCE anomalies :", sum(
-            a["metric"] == "ROCE"
-            for a in anomalies
-        ))
+        print("ROCE anomalies :", sum(a["metric"] == "ROCE" for a in anomalies))
 
-        print("ROE anomalies  :", sum(
-            a["metric"] == "ROE"
-            for a in anomalies
-        ))
+        print("ROE anomalies  :", sum(a["metric"] == "ROE" for a in anomalies))
 
         print("Total anomalies :", len(anomalies))
 

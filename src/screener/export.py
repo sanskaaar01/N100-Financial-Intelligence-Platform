@@ -3,11 +3,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill, Font
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from src.screener.engine import run_screener, load_financial_data
-
+from src.screener.engine import load_financial_data, run_screener
 
 OUTPUT_DIR = Path("output")
 OUTPUT_FILE = OUTPUT_DIR / "screener_output.xlsx"
@@ -53,6 +52,7 @@ SCORE_METRICS = {
 # DATA PREPARATION
 # ---------------------------------------------------------------------
 
+
 def add_missing_score_columns(df):
     """
     Add score inputs that may not yet exist in the current
@@ -78,7 +78,8 @@ def add_missing_score_columns(df):
         pd.to_numeric(
             result["free_cash_flow_cr"],
             errors="coerce",
-        ) > 0
+        )
+        > 0
     ).astype(float)
 
     return result
@@ -87,6 +88,7 @@ def add_missing_score_columns(df):
 # ---------------------------------------------------------------------
 # P10 / P90 WINSORIZATION
 # ---------------------------------------------------------------------
+
 
 def winsorize_series(series):
     """
@@ -139,10 +141,7 @@ def normalize_0_100(series, inverse=False):
         )
 
     else:
-        result = (
-            (capped - minimum)
-            / (maximum - minimum)
-        ) * 100
+        result = ((capped - minimum) / (maximum - minimum)) * 100
 
     if inverse:
         result = 100 - result
@@ -153,6 +152,7 @@ def normalize_0_100(series, inverse=False):
 # ---------------------------------------------------------------------
 # SECTOR-RELATIVE NORMALIZATION
 # ---------------------------------------------------------------------
+
 
 def sector_normalize(
     df,
@@ -197,6 +197,7 @@ def sector_normalize(
 # COMPOSITE QUALITY SCORE
 # ---------------------------------------------------------------------
 
+
 def calculate_composite_quality_score(df):
     """
     Calculate the 0-100 composite quality score.
@@ -222,9 +223,7 @@ def calculate_composite_quality_score(df):
         ICR 5%
     """
 
-    result = add_missing_score_columns(
-        df
-    )
+    result = add_missing_score_columns(df)
 
     # Sector-relative normalized metrics.
 
@@ -253,9 +252,7 @@ def calculate_composite_quality_score(df):
         "cfo_pat_ratio",
     )
 
-    fcf_positive_score = (
-        result["fcf_positive_flag"] * 100
-    )
+    fcf_positive_score = result["fcf_positive_flag"] * 100
 
     revenue_score = sector_normalize(
         result,
@@ -280,33 +277,18 @@ def calculate_composite_quality_score(df):
 
     # Weighted components.
 
-    profitability = (
-        roe_score * 0.15
-        + roce_score * 0.10
-        + npm_score * 0.10
-    )
+    profitability = roe_score * 0.15 + roce_score * 0.10 + npm_score * 0.10
 
     cash_quality = (
-        fcf_cagr_score * 0.15
-        + cfo_pat_score * 0.10
-        + fcf_positive_score * 0.05
+        fcf_cagr_score * 0.15 + cfo_pat_score * 0.10 + fcf_positive_score * 0.05
     )
 
-    growth = (
-        revenue_score * 0.10
-        + pat_score * 0.10
-    )
+    growth = revenue_score * 0.10 + pat_score * 0.10
 
-    leverage = (
-        debt_score * 0.10
-        + icr_score * 0.05
-    )
+    leverage = debt_score * 0.10 + icr_score * 0.05
 
     result["composite_quality_score"] = (
-        profitability
-        + cash_quality
-        + growth
-        + leverage
+        profitability + cash_quality + growth + leverage
     ).clip(
         lower=0,
         upper=100,
@@ -319,6 +301,7 @@ def calculate_composite_quality_score(df):
 # PRESET THRESHOLD CHECK
 # ---------------------------------------------------------------------
 
+
 def threshold_columns_for_preset(
     preset,
 ):
@@ -327,39 +310,33 @@ def threshold_columns_for_preset(
     """
 
     rules = {
-
         "quality_compounder": {
             "return_on_equity_pct": ("min", 15),
             "debt_to_equity": ("max", 1),
             "free_cash_flow_cr": ("min", 0),
             "revenue_cagr_5yr": ("min", 10),
         },
-
         "value_pick": {
             "pe": ("max", 20),
             "pb": ("max", 3),
             "debt_to_equity": ("max", 2),
             "dividend_yield": ("min", 1),
         },
-
         "growth_accelerator": {
             "pat_cagr_5yr": ("min", 20),
             "revenue_cagr_5yr": ("min", 15),
             "debt_to_equity": ("max", 2),
         },
-
         "dividend_champion": {
             "dividend_yield": ("min", 2),
             "dividend_payout_ratio_pct": ("max", 80),
             "free_cash_flow_cr": ("min", 0),
         },
-
         "debt_free_blue_chip": {
             "debt_to_equity": ("max", 0),
             "return_on_equity_pct": ("min", 12),
             "sales": ("min", 5000),
         },
-
         "turnaround_watch": {
             "revenue_cagr_3yr": ("min", 10),
             "free_cash_flow_cr": ("min", 0),
@@ -412,28 +389,18 @@ def format_sheet(
 ):
     ws = workbook[sheet_name]
 
-    headers = [
-        cell.value
-        for cell in ws[1]
-    ]
+    headers = [cell.value for cell in ws[1]]
 
-    header_index = {
-        value: index + 1
-        for index, value in enumerate(headers)
-    }
+    header_index = {value: index + 1 for index, value in enumerate(headers)}
 
-    rules = threshold_columns_for_preset(
-        preset
-    )
+    rules = threshold_columns_for_preset(preset)
 
     for metric, rule in rules.items():
 
         if metric not in header_index:
             continue
 
-        column_number = header_index[
-            metric
-        ]
+        column_number = header_index[metric]
 
         for row in range(
             2,
@@ -446,9 +413,7 @@ def format_sheet(
             )
 
             try:
-                value = float(
-                    cell.value
-                )
+                value = float(cell.value)
             except (
                 TypeError,
                 ValueError,
@@ -466,9 +431,7 @@ def format_sheet(
 
     # Header formatting.
     for cell in ws[1]:
-        cell.font = Font(
-            bold=True
-        )
+        cell.font = Font(bold=True)
 
     ws.freeze_panes = "A2"
 
@@ -477,9 +440,7 @@ def format_sheet(
 
         maximum = 0
 
-        column_letter = get_column_letter(
-            column_cells[0].column
-        )
+        column_letter = get_column_letter(column_cells[0].column)
 
         for cell in column_cells:
 
@@ -489,9 +450,7 @@ def format_sheet(
                     len(str(cell.value)),
                 )
 
-        ws.column_dimensions[
-            column_letter
-        ].width = min(
+        ws.column_dimensions[column_letter].width = min(
             maximum + 2,
             30,
         )
@@ -501,6 +460,7 @@ def format_sheet(
 # EXPORT
 # ---------------------------------------------------------------------
 
+
 def export_screener_output():
     OUTPUT_DIR.mkdir(
         parents=True,
@@ -509,9 +469,7 @@ def export_screener_output():
 
     base_data = load_financial_data()
 
-    scored_data = calculate_composite_quality_score(
-        base_data
-    )
+    scored_data = calculate_composite_quality_score(base_data)
 
     # Keep the requested KPI-oriented columns.
     export_columns = [
@@ -539,9 +497,7 @@ def export_screener_output():
 
     # Only export columns actually available.
     export_columns = [
-        column
-        for column in export_columns
-        if column in scored_data.columns
+        column for column in export_columns if column in scored_data.columns
     ]
 
     with pd.ExcelWriter(
@@ -551,15 +507,11 @@ def export_screener_output():
 
         for preset in PRESETS:
 
-            result = run_screener(
-                preset=preset
-            )
+            result = run_screener(preset=preset)
 
             # Merge composite score.
             result = result.drop(
-                columns=[
-                    "composite_quality_score"
-                ],
+                columns=["composite_quality_score"],
                 errors="ignore",
             )
 
@@ -580,11 +532,7 @@ def export_screener_output():
                 na_position="last",
             )
 
-            columns = [
-                column
-                for column in export_columns
-                if column in result.columns
-            ]
+            columns = [column for column in export_columns if column in result.columns]
 
             result[columns].to_excel(
                 writer,
@@ -593,9 +541,7 @@ def export_screener_output():
             )
 
     # Apply cell-level formatting.
-    workbook = load_workbook(
-        OUTPUT_FILE
-    )
+    workbook = load_workbook(OUTPUT_FILE)
 
     for preset in PRESETS:
 
@@ -610,9 +556,7 @@ def export_screener_output():
             preset,
         )
 
-    workbook.save(
-        OUTPUT_FILE
-    )
+    workbook.save(OUTPUT_FILE)
 
     return OUTPUT_FILE
 
@@ -646,18 +590,13 @@ if __name__ == "__main__":
     )
 
     print()
-    print(
-        "Sheet counts:"
-    )
+    print("Sheet counts:")
 
     for sheet in workbook.sheetnames:
 
         ws = workbook[sheet]
 
-        print(
-            f"{sheet:25s}: "
-            f"{max(ws.max_row - 1, 0):3d} rows"
-        )
+        print(f"{sheet:25s}: " f"{max(ws.max_row - 1, 0):3d} rows")
 
     print()
     print("✅ DAY 17 COMPLETE")

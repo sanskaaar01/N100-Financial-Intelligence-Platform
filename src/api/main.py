@@ -1,11 +1,10 @@
-﻿from pathlib import Path
-import sqlite3
+﻿import sqlite3
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
 
 # ============================================================
 # PATHS
@@ -29,6 +28,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     """Return HTTP 400 for invalid API parameters."""
@@ -36,7 +36,6 @@ async def validation_exception_handler(request, exc):
         status_code=400,
         content={"detail": exc.errors()},
     )
-
 
 
 # ============================================================
@@ -56,6 +55,7 @@ app.add_middleware(
 # DATABASE HELPER
 # ============================================================
 
+
 def get_connection():
     if not DB_PATH.exists():
         raise HTTPException(
@@ -72,6 +72,7 @@ def get_connection():
 # SAFE DATAFRAME JSON CONVERSION
 # ============================================================
 
+
 def dataframe_records(df):
     import pandas as pd
 
@@ -86,6 +87,7 @@ def dataframe_records(df):
 # ROOT
 # ============================================================
 
+
 @app.get("/")
 def root():
     return {
@@ -99,14 +101,13 @@ def root():
 # HEALTH
 # ============================================================
 
+
 @app.get("/health")
 def health():
     try:
         conn = get_connection()
 
-        conn.execute(
-            "SELECT 1"
-        ).fetchone()
+        conn.execute("SELECT 1").fetchone()
 
         conn.close()
 
@@ -126,34 +127,31 @@ def health():
 # COMPANY LIST
 # ============================================================
 
+
 @app.get("/api/companies")
 def get_companies():
     conn = get_connection()
 
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT
             id AS company_id,
             company_name
         FROM companies
         ORDER BY id
-        """
-    ).fetchall()
+        """).fetchall()
 
     conn.close()
 
     return {
         "count": len(rows),
-        "companies": [
-            dict(row)
-            for row in rows
-        ],
+        "companies": [dict(row) for row in rows],
     }
 
 
 # ============================================================
 # COMPANY PROFILE
 # ============================================================
+
 
 @app.get("/api/companies/{company_id}")
 def get_company(company_id: str):
@@ -193,6 +191,7 @@ def get_company(company_id: str):
 # FINANCIAL RATIOS
 # ============================================================
 
+
 @app.get("/api/companies/{company_id}/ratios")
 def get_company_ratios(company_id: str):
     conn = get_connection()
@@ -218,16 +217,14 @@ def get_company_ratios(company_id: str):
     return {
         "company_id": company_id,
         "count": len(rows),
-        "data": [
-            dict(row)
-            for row in rows
-        ],
+        "data": [dict(row) for row in rows],
     }
 
 
 # ============================================================
 # CASH FLOW
 # ============================================================
+
 
 @app.get("/api/companies/{company_id}/cashflow")
 def get_company_cashflow(company_id: str):
@@ -254,16 +251,14 @@ def get_company_cashflow(company_id: str):
     return {
         "company_id": company_id,
         "count": len(rows),
-        "data": [
-            dict(row)
-            for row in rows
-        ],
+        "data": [dict(row) for row in rows],
     }
 
 
 # ============================================================
 # KMEANS CLUSTER
 # ============================================================
+
 
 @app.get("/api/clusters")
 def get_clusters():
@@ -289,6 +284,7 @@ def get_clusters():
 # CLUSTER LABELS
 # ============================================================
 
+
 @app.get("/api/cluster-labels")
 def get_cluster_labels():
     path = ROOT / "output" / "cluster_labels.csv"
@@ -312,6 +308,7 @@ def get_cluster_labels():
 # ============================================================
 # PORTFOLIO STATISTICS
 # ============================================================
+
 
 @app.get("/api/portfolio/stats")
 def get_portfolio_stats():
@@ -337,6 +334,7 @@ def get_portfolio_stats():
 # OUTLIERS
 # ============================================================
 
+
 @app.get("/api/outliers")
 def get_outliers():
     path = ROOT / "output" / "outlier_report.csv"
@@ -360,6 +358,7 @@ def get_outliers():
 # ============================================================
 # CAPITAL ALLOCATION
 # ============================================================
+
 
 @app.get("/api/capital-allocation")
 def get_capital_allocation():
@@ -385,6 +384,7 @@ def get_capital_allocation():
 # PROS & CONS
 # ============================================================
 
+
 @app.get("/api/companies/{company_id}/pros-cons")
 def get_pros_cons(company_id: str):
     path = ROOT / "output" / "pros_cons_generated.csv"
@@ -399,10 +399,7 @@ def get_pros_cons(company_id: str):
 
     df = pd.read_csv(path)
 
-    df = df[
-        df["company_id"].astype(str)
-        == company_id
-    ]
+    df = df[df["company_id"].astype(str) == company_id]
 
     if df.empty:
         raise HTTPException(
@@ -420,9 +417,10 @@ def get_pros_cons(company_id: str):
 # DAY 39 - VERSIONED COMPANY DATA API
 # ============================================================
 
-from fastapi.responses import FileResponse
-from fastapi import Query
 import math
+
+from fastapi import Query
+from fastapi.responses import FileResponse
 
 
 def _json_safe(value):
@@ -431,9 +429,7 @@ def _json_safe(value):
         return None
 
     try:
-        if isinstance(value, float) and (
-            math.isnan(value) or math.isinf(value)
-        ):
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
             return None
     except Exception:
         pass
@@ -444,11 +440,7 @@ def _json_safe(value):
 def _rows_to_dicts(rows):
     """Convert SQLite rows into JSON-safe dictionaries."""
     return [
-        {
-            key: _json_safe(value)
-            for key, value in dict(row).items()
-        }
-        for row in rows
+        {key: _json_safe(value) for key, value in dict(row).items()} for row in rows
     ]
 
 
@@ -492,6 +484,7 @@ def _validate_year(value, name):
 # COMPANY LIST
 # ============================================================
 
+
 @app.get("/api/v1/health")
 def v1_health():
     """Return API health and database row counts."""
@@ -514,9 +507,7 @@ def v1_health():
 
     for table in tables:
         try:
-            counts[table] = conn.execute(
-                f"SELECT COUNT(*) FROM {table}"
-            ).fetchone()[0]
+            counts[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         except sqlite3.Error:
             counts[table] = 0
 
@@ -597,6 +588,7 @@ def v1_companies(
 # FULL COMPANY PROFILE
 # ============================================================
 
+
 @app.get("/api/v1/companies/{ticker}")
 def v1_company(ticker: str):
     """Return complete company profile and latest KPIs."""
@@ -636,10 +628,7 @@ def v1_company(ticker: str):
     result = dict(company)
 
     result["latest_kpis"] = (
-        {
-            key: _json_safe(value)
-            for key, value in dict(latest).items()
-        }
+        {key: _json_safe(value) for key, value in dict(latest).items()}
         if latest
         else {}
     )
@@ -647,16 +636,14 @@ def v1_company(ticker: str):
     return {
         "company_id": ticker,
         "company_name": company["company_name"],
-        "company": {
-            key: _json_safe(value)
-            for key, value in result.items()
-        },
+        "company": {key: _json_safe(value) for key, value in result.items()},
     }
 
 
 # ============================================================
 # P&L
 # ============================================================
+
 
 @app.get("/api/v1/companies/{ticker}/pl")
 def v1_company_pl(
@@ -703,6 +690,7 @@ def v1_company_pl(
 # BALANCE SHEET
 # ============================================================
 
+
 @app.get("/api/v1/companies/{ticker}/bs")
 def v1_company_bs(
     ticker: str,
@@ -747,6 +735,7 @@ def v1_company_bs(
 # ============================================================
 # CASH FLOW
 # ============================================================
+
 
 @app.get("/api/v1/companies/{ticker}/cashflow")
 def v1_company_cashflow(
@@ -793,6 +782,7 @@ def v1_company_cashflow(
 # RATIOS
 # ============================================================
 
+
 @app.get("/api/v1/companies/{ticker}/ratios")
 def v1_company_ratios(
     ticker: str,
@@ -830,6 +820,7 @@ def v1_company_ratios(
 # TEARSHEET PDF
 # ============================================================
 
+
 @app.get("/api/v1/companies/{ticker}/tearsheet")
 def v1_company_tearsheet(ticker: str):
     """Return the pre-generated company tearsheet PDF."""
@@ -837,11 +828,7 @@ def v1_company_tearsheet(ticker: str):
     ticker = _validate_ticker(conn, ticker)
     conn.close()
 
-    pdf_path = (
-        Path("reports")
-        / "tearsheets"
-        / f"{ticker}_tearsheet.pdf"
-    )
+    pdf_path = Path("reports") / "tearsheets" / f"{ticker}_tearsheet.pdf"
 
     if not pdf_path.exists():
         raise HTTPException(
@@ -855,9 +842,11 @@ def v1_company_tearsheet(ticker: str):
         filename=f"{ticker}_tearsheet.pdf",
     )
 
+
 # ============================================================
 # DAY 40 - SCREENER, SECTOR, PEER & REMAINING API
 # ============================================================
+
 
 @app.get("/api/v1/screener")
 def v1_screener(
@@ -1030,14 +1019,14 @@ def v1_screener(
         "data": data,
     }
 
+
 @app.get("/api/v1/sectors")
 def v1_sectors():
     """Return all sectors with company counts and median KPIs."""
 
     conn = get_connection()
 
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT
             s.broad_sector AS sector,
             COUNT(DISTINCT s.company_id) AS company_count,
@@ -1068,8 +1057,7 @@ def v1_sectors():
         WHERE s.broad_sector IS NOT NULL
         GROUP BY s.broad_sector
         ORDER BY s.broad_sector
-        """
-    ).fetchall()
+        """).fetchall()
 
     conn.close()
 
@@ -1145,6 +1133,7 @@ def v1_sector_companies(sector: str):
 # PEERS
 # ============================================================
 
+
 @app.get("/api/v1/peers/{group_name}")
 def v1_peers(group_name: str):
     """Return companies in a peer group."""
@@ -1152,10 +1141,7 @@ def v1_peers(group_name: str):
     conn = get_connection()
 
     columns = [
-        row[1]
-        for row in conn.execute(
-            "PRAGMA table_info(peer_groups)"
-        ).fetchall()
+        row[1] for row in conn.execute("PRAGMA table_info(peer_groups)").fetchall()
     ]
 
     if not columns:
@@ -1207,6 +1193,7 @@ def v1_peers(group_name: str):
         "data": _rows_to_dicts(rows),
     }
 
+
 @app.get("/api/v1/companies/{ticker}/peers/compare")
 def v1_peer_compare(ticker: str):
     """Return radar comparison data for a company."""
@@ -1252,10 +1239,7 @@ def v1_peer_compare(ticker: str):
             detail=f"Company '{ticker}' not found.",
         )
 
-    company_data = {
-        key: _json_safe(value)
-        for key, value in dict(company).items()
-    }
+    company_data = {key: _json_safe(value) for key, value in dict(company).items()}
 
     metrics = [
         "return_on_equity_pct",
@@ -1291,6 +1275,7 @@ def v1_peer_compare(ticker: str):
 # MARKET CAP / VALUATION
 # ============================================================
 
+
 @app.get("/api/v1/market-cap/{ticker}")
 def v1_market_cap(ticker: str):
     """Return historical valuation multiples."""
@@ -1325,14 +1310,14 @@ def v1_market_cap(ticker: str):
 # PORTFOLIO STATS
 # ============================================================
 
+
 @app.get("/api/v1/portfolio/stats")
 def v1_portfolio_stats():
     """Return percentile statistics for core KPIs."""
 
     conn = get_connection()
 
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT *
         FROM financial_ratios
         WHERE year IN (
@@ -1340,8 +1325,7 @@ def v1_portfolio_stats():
             FROM financial_ratios
             GROUP BY company_id
         )
-        """
-    ).fetchall()
+        """).fetchall()
 
     conn.close()
 
@@ -1353,9 +1337,7 @@ def v1_portfolio_stats():
 
     import pandas as pd
 
-    df = pd.DataFrame(
-        [dict(row) for row in rows]
-    )
+    df = pd.DataFrame([dict(row) for row in rows])
 
     metrics = [
         "net_profit_margin_pct",
@@ -1409,6 +1391,7 @@ def v1_portfolio_stats():
 # DOCUMENTS
 # ============================================================
 
+
 @app.get("/api/v1/companies/{ticker}/documents")
 def v1_company_documents(ticker: str):
     """Return company annual report documents."""
@@ -1429,15 +1412,10 @@ def v1_company_documents(ticker: str):
     data = _rows_to_dicts(rows)
 
     for item in data:
-        url = (
-            item.get("url")
-            or item.get("document_url")
-            or item.get("link")
-        )
+        url = item.get("url") or item.get("document_url") or item.get("link")
 
         item["is_url_valid"] = bool(
-            isinstance(url, str)
-            and url.strip().startswith(("http://", "https://"))
+            isinstance(url, str) and url.strip().startswith(("http://", "https://"))
         )
 
     return {
@@ -1450,6 +1428,7 @@ def v1_company_documents(ticker: str):
 # ============================================================
 # API METADATA
 # ============================================================
+
 
 @app.get("/api/v1/openapi-info")
 def v1_openapi_info():

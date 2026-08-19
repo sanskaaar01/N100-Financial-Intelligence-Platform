@@ -1,12 +1,11 @@
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill, Font, Alignment
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
-
 
 DB_PATH = Path("db/nifty100.db")
 OUTPUT_DIR = Path("output")
@@ -163,9 +162,7 @@ def load_company_names():
                 conn,
             )
 
-            result["company_name"] = (
-                result["company_id"]
-            )
+            result["company_name"] = result["company_id"]
 
             return result[
                 [
@@ -232,17 +229,13 @@ def build_comparison_table(
 
         for metric_name, _ in METRICS:
 
-            metric_rows = group[
-                group["metric"] == metric_name
-            ]
+            metric_rows = group[group["metric"] == metric_name]
 
             if metric_rows.empty:
 
                 row[metric_name] = np.nan
 
-                row[
-                    f"{metric_name}_percentile"
-                ] = np.nan
+                row[f"{metric_name}_percentile"] = np.nan
 
             else:
 
@@ -259,13 +252,9 @@ def build_comparison_table(
                 )
 
                 if pd.isna(percentile):
-                    row[
-                        f"{metric_name}_percentile"
-                    ] = np.nan
+                    row[f"{metric_name}_percentile"] = np.nan
                 else:
-                    row[
-                        f"{metric_name}_percentile"
-                    ] = float(percentile) * 100
+                    row[f"{metric_name}_percentile"] = float(percentile) * 100
 
         rows.append(row)
 
@@ -276,9 +265,7 @@ def build_comparison_table(
 
     if not company_names.empty:
 
-        names = company_names.drop_duplicates(
-            "company_id"
-        )
+        names = company_names.drop_duplicates("company_id")
 
         result = result.merge(
             names,
@@ -286,28 +273,18 @@ def build_comparison_table(
             how="left",
         )
 
-        result["company_name"] = (
-            result["company_name"]
-            .fillna(result["company_id"])
-        )
+        result["company_name"] = result["company_name"].fillna(result["company_id"])
 
     else:
 
-        result["company_name"] = (
-            result["company_id"]
-        )
+        result["company_name"] = result["company_id"]
 
-    benchmark_lookup = (
-        peer_groups[
-            peer_groups["is_benchmark"] == 1
-        ][
-            [
-                "peer_group_name",
-                "company_id",
-            ]
+    benchmark_lookup = peer_groups[peer_groups["is_benchmark"] == 1][
+        [
+            "peer_group_name",
+            "company_id",
         ]
-        .drop_duplicates()
-    )
+    ].drop_duplicates()
 
     benchmark_lookup["is_benchmark"] = True
 
@@ -320,11 +297,7 @@ def build_comparison_table(
         how="left",
     )
 
-    result["is_benchmark"] = (
-        result["is_benchmark"]
-        .fillna(False)
-        .astype(bool)
-    )
+    result["is_benchmark"] = result["is_benchmark"].fillna(False).astype(bool)
 
     return result
 
@@ -341,9 +314,7 @@ def get_visible_columns():
         columns.append(metric_name)
 
     for metric_name, _ in METRICS:
-        columns.append(
-            f"{metric_name}_percentile"
-        )
+        columns.append(f"{metric_name}_percentile")
 
     return columns
 
@@ -374,9 +345,7 @@ def add_peer_median(
     ws,
     dataframe,
 ):
-    median_row_number = (
-        ws.max_row + 2
-    )
+    median_row_number = ws.max_row + 2
 
     ws.cell(
         row=median_row_number,
@@ -438,9 +407,7 @@ def add_peer_median(
             ws.cell(
                 row=median_row_number,
                 column=column_number,
-                value=float(
-                    np.median(values)
-                ),
+                value=float(np.median(values)),
             )
 
     for column_number in range(
@@ -455,9 +422,7 @@ def add_peer_median(
 
         cell.fill = MEDIAN_FILL
 
-        cell.font = Font(
-            bold=True
-        )
+        cell.font = Font(bold=True)
 
     return median_row_number
 
@@ -476,9 +441,7 @@ def apply_excel_formatting(
 
             cell.fill = HEADER_FILL
 
-            cell.font = Font(
-                bold=True
-            )
+            cell.font = Font(bold=True)
 
             cell.alignment = Alignment(
                 horizontal="center",
@@ -504,19 +467,10 @@ def apply_excel_formatting(
             ).value
 
             if header == "company_id":
-                company_id_column = (
-                    column_number
-                )
+                company_id_column = column_number
 
-            if (
-                header is not None
-                and str(header).endswith(
-                    "_percentile"
-                )
-            ):
-                percentile_columns.append(
-                    column_number
-                )
+            if header is not None and str(header).endswith("_percentile"):
+                percentile_columns.append(column_number)
 
         # -----------------------------
         # Percentile colour coding
@@ -538,9 +492,7 @@ def apply_excel_formatting(
                     continue
 
                 try:
-                    value = float(
-                        cell.value
-                    )
+                    value = float(cell.value)
                 except (
                     TypeError,
                     ValueError,
@@ -624,9 +576,7 @@ def apply_excel_formatting(
                     ws.cell(
                         row=row_number,
                         column=column_number,
-                    ).font = Font(
-                        bold=True
-                    )
+                    ).font = Font(bold=True)
 
         # -----------------------------
         # Freeze header
@@ -642,11 +592,7 @@ def apply_excel_formatting(
 
             maximum_length = 0
 
-            column_letter = (
-                get_column_letter(
-                    column_cells[0].column
-                )
-            )
+            column_letter = get_column_letter(column_cells[0].column)
 
             for cell in column_cells:
 
@@ -658,9 +604,7 @@ def apply_excel_formatting(
                     len(str(cell.value)),
                 )
 
-            ws.column_dimensions[
-                column_letter
-            ].width = min(
+            ws.column_dimensions[column_letter].width = min(
                 maximum_length + 2,
                 30,
             )
@@ -678,14 +622,7 @@ def write_excel(
     if OUTPUT_FILE.exists():
         OUTPUT_FILE.unlink()
 
-    group_names = (
-        peer_groups[
-            "peer_group_name"
-        ]
-        .dropna()
-        .drop_duplicates()
-        .tolist()
-    )
+    group_names = peer_groups["peer_group_name"].dropna().drop_duplicates().tolist()
 
     print()
     print(
@@ -705,38 +642,24 @@ def write_excel(
     # Remove default sheet.
     default_sheet = workbook.active
 
-    workbook.remove(
-        default_sheet
-    )
+    workbook.remove(default_sheet)
 
     benchmark_map = {}
 
     for peer_group in group_names:
 
-        sheet_name = safe_sheet_name(
-            peer_group
-        )
+        sheet_name = safe_sheet_name(peer_group)
 
-        print(
-            f"Creating sheet: {peer_group}"
-        )
+        print(f"Creating sheet: {peer_group}")
 
-        group = comparison[
-            comparison[
-                "peer_group_name"
-            ] == peer_group
-        ].copy()
+        group = comparison[comparison["peer_group_name"] == peer_group].copy()
 
         if group.empty:
 
-            print(
-                f"  WARNING: no rows for {peer_group}"
-            )
+            print(f"  WARNING: no rows for {peer_group}")
 
             # Still create the required sheet.
-            ws = workbook.create_sheet(
-                title=sheet_name
-            )
+            ws = workbook.create_sheet(title=sheet_name)
 
             ws["A1"] = "No data available"
 
@@ -747,42 +670,20 @@ def write_excel(
         # --------------------------------
 
         benchmark_rows = peer_groups[
-            (
-                peer_groups[
-                    "peer_group_name"
-                ] == peer_group
-            )
-            & (
-                peer_groups[
-                    "is_benchmark"
-                ] == 1
-            )
+            (peer_groups["peer_group_name"] == peer_group)
+            & (peer_groups["is_benchmark"] == 1)
         ]
 
-        benchmark_ids = set(
-            benchmark_rows[
-                "company_id"
-            ]
-            .astype(str)
-            .tolist()
-        )
+        benchmark_ids = set(benchmark_rows["company_id"].astype(str).tolist())
 
-        benchmark_map[
-            sheet_name
-        ] = benchmark_ids
+        benchmark_map[sheet_name] = benchmark_ids
 
         # --------------------------------
         # CRITICAL FIX:
         # Keep is_benchmark until AFTER sorting
         # --------------------------------
 
-        group["is_benchmark"] = (
-            group["company_id"]
-            .astype(str)
-            .isin(
-                benchmark_ids
-            )
-        )
+        group["is_benchmark"] = group["company_id"].astype(str).isin(benchmark_ids)
 
         group = group.sort_values(
             by=[
@@ -797,23 +698,17 @@ def write_excel(
             ],
         )
 
-        visible_columns = (
-            get_visible_columns()
-        )
+        visible_columns = get_visible_columns()
 
         visible_columns = [
-            column
-            for column in visible_columns
-            if column in group.columns
+            column for column in visible_columns if column in group.columns
         ]
 
         # --------------------------------
         # Create worksheet
         # --------------------------------
 
-        ws = workbook.create_sheet(
-            title=sheet_name
-        )
+        ws = workbook.create_sheet(title=sheet_name)
 
         # Header
         for column_number, column_name in enumerate(
@@ -829,9 +724,7 @@ def write_excel(
 
             cell.fill = HEADER_FILL
 
-            cell.font = Font(
-                bold=True
-            )
+            cell.font = Font(bold=True)
 
             cell.alignment = Alignment(
                 horizontal="center",
@@ -867,14 +760,10 @@ def write_excel(
                 )
 
                 # Percentile formatting
-                if column_name.endswith(
-                    "_percentile"
-                ) and value is not None:
+                if column_name.endswith("_percentile") and value is not None:
 
                     try:
-                        percentile = float(
-                            value
-                        )
+                        percentile = float(value)
 
                         if percentile >= 75:
                             cell.fill = GREEN_FILL
@@ -920,11 +809,7 @@ def write_excel(
                     column=company_id_index,
                 ).value
 
-                if (
-                    company_id is not None
-                    and str(company_id)
-                    in benchmark_ids
-                ):
+                if company_id is not None and str(company_id) in benchmark_ids:
 
                     for column_number in range(
                         1,
@@ -996,9 +881,7 @@ def write_excel(
                 ws.cell(
                     row=median_row,
                     column=column_number,
-                    value=float(
-                        np.median(values)
-                    ),
+                    value=float(np.median(values)),
                 )
 
         # Median styling
@@ -1014,9 +897,7 @@ def write_excel(
 
             cell.fill = MEDIAN_FILL
 
-            cell.font = Font(
-                bold=True
-            )
+            cell.font = Font(bold=True)
 
         ws.freeze_panes = "A2"
 
@@ -1048,11 +929,7 @@ def write_excel(
                         len(str(value)),
                     )
 
-            ws.column_dimensions[
-                get_column_letter(
-                    column_number
-                )
-            ].width = min(
+            ws.column_dimensions[get_column_letter(column_number)].width = min(
                 maximum + 2,
                 30,
             )
@@ -1063,13 +940,9 @@ def write_excel(
 
     if len(workbook.sheetnames) == 0:
 
-        raise RuntimeError(
-            "No peer-group sheets were created."
-        )
+        raise RuntimeError("No peer-group sheets were created.")
 
-    workbook.save(
-        OUTPUT_FILE
-    )
+    workbook.save(OUTPUT_FILE)
 
     return workbook.sheetnames
 
@@ -1077,9 +950,7 @@ def write_excel(
 def verify_output():
     if not OUTPUT_FILE.exists():
 
-        raise FileNotFoundError(
-            f"Output file was not created: {OUTPUT_FILE}"
-        )
+        raise FileNotFoundError(f"Output file was not created: {OUTPUT_FILE}")
 
     workbook = load_workbook(
         OUTPUT_FILE,
@@ -1110,21 +981,14 @@ def verify_output():
             0,
         )
 
-        print(
-            f"{sheet_name:25s}: "
-            f"{company_rows} company rows"
-        )
+        print(f"{sheet_name:25s}: " f"{company_rows} company rows")
 
     if len(sheets) != 11:
 
-        raise RuntimeError(
-            f"Expected 11 sheets, got {len(sheets)}"
-        )
+        raise RuntimeError(f"Expected 11 sheets, got {len(sheets)}")
 
     print()
-    print(
-        "✅ Exactly 11 peer-group sheets verified"
-    )
+    print("✅ Exactly 11 peer-group sheets verified")
 
     return sheets
 
@@ -1132,16 +996,12 @@ def verify_output():
 def run_peer_comparison():
 
     print("=" * 70)
-    print(
-        "DAY 20 — PEER COMPARISON EXCEL REPORT"
-    )
+    print("DAY 20 — PEER COMPARISON EXCEL REPORT")
     print("=" * 70)
 
     peer_groups = load_peer_groups()
 
-    peer_percentiles = (
-        load_peer_percentiles()
-    )
+    peer_percentiles = load_peer_percentiles()
 
     company_names = load_company_names()
 
@@ -1153,16 +1013,12 @@ def run_peer_comparison():
 
     print(
         "Peer groups:",
-        peer_groups[
-            "peer_group_name"
-        ].nunique(),
+        peer_groups["peer_group_name"].nunique(),
     )
 
     print(
         "Companies:",
-        peer_groups[
-            "company_id"
-        ].nunique(),
+        peer_groups["company_id"].nunique(),
     )
 
     print(
@@ -1184,9 +1040,7 @@ def run_peer_comparison():
 
     if comparison.empty:
 
-        raise RuntimeError(
-            "Comparison table is empty."
-        )
+        raise RuntimeError("Comparison table is empty.")
 
     sheets = write_excel(
         comparison,
@@ -1196,9 +1050,7 @@ def run_peer_comparison():
     verify_output()
 
     print()
-    print(
-        "Sheet names:"
-    )
+    print("Sheet names:")
 
     for sheet in sheets:
         print(
@@ -1207,9 +1059,7 @@ def run_peer_comparison():
         )
 
     print()
-    print(
-        "✅ DAY 20 PEER COMPARISON COMPLETE"
-    )
+    print("✅ DAY 20 PEER COMPARISON COMPLETE")
 
 
 if __name__ == "__main__":

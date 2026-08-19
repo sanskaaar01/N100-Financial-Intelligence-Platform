@@ -7,9 +7,8 @@ Profitability, leverage and efficiency ratio calculations.
 
 from __future__ import annotations
 
-from typing import Optional, Any
 import logging
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,8 @@ logger = logging.getLogger(__name__)
 # HELPERS
 # ============================================================
 
-def _to_float(value: Any) -> Optional[float]:
+
+def _to_float(value: Any) -> float | None:
     """Safely convert a value to float."""
 
     if value is None:
@@ -39,10 +39,11 @@ def _to_float(value: Any) -> Optional[float]:
 # PROFITABILITY RATIOS
 # ============================================================
 
+
 def net_profit_margin(
     net_profit: float,
     sales: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Net Profit Margin (%)
 
@@ -67,7 +68,7 @@ def net_profit_margin(
 def operating_profit_margin(
     operating_profit: float,
     sales: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Operating Profit Margin (%)
 
@@ -134,7 +135,7 @@ def return_on_equity(
     net_profit: float,
     equity_capital: float,
     reserves: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Return on Equity (ROE) (%)
 
@@ -148,11 +149,7 @@ def return_on_equity(
     equity_capital = _to_float(equity_capital)
     reserves = _to_float(reserves)
 
-    if (
-        net_profit is None
-        or equity_capital is None
-        or reserves is None
-    ):
+    if net_profit is None or equity_capital is None or reserves is None:
         return None
 
     equity = equity_capital + reserves
@@ -169,7 +166,7 @@ def return_on_capital_employed(
     equity_capital: float,
     reserves: float,
     borrowings: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Return on Capital Employed (ROCE) (%)
 
@@ -201,11 +198,7 @@ def return_on_capital_employed(
     ):
         return None
 
-    capital_employed = (
-        equity_capital
-        + reserves
-        + borrowings
-    )
+    capital_employed = equity_capital + reserves + borrowings
 
     if capital_employed <= 0:
         return None
@@ -218,7 +211,7 @@ def return_on_capital_employed(
 def return_on_assets(
     net_profit: float,
     total_assets: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Return on Assets (ROA) (%)
 
@@ -242,11 +235,12 @@ def return_on_assets(
 # LEVERAGE RATIOS
 # ============================================================
 
+
 def debt_to_equity(
     borrowings: float,
     equity_capital: float,
     reserves: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Debt-to-Equity ratio.
 
@@ -262,11 +256,7 @@ def debt_to_equity(
     equity_capital = _to_float(equity_capital)
     reserves = _to_float(reserves)
 
-    if (
-        borrowings is None
-        or equity_capital is None
-        or reserves is None
-    ):
+    if borrowings is None or equity_capital is None or reserves is None:
         return None
 
     if borrowings == 0:
@@ -284,7 +274,7 @@ def interest_coverage_ratio(
     operating_profit: float,
     other_income: float,
     interest: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Interest Coverage Ratio.
 
@@ -298,11 +288,7 @@ def interest_coverage_ratio(
     other_income = _to_float(other_income)
     interest = _to_float(interest)
 
-    if (
-        operating_profit is None
-        or other_income is None
-        or interest is None
-    ):
+    if operating_profit is None or other_income is None or interest is None:
         return None
 
     if interest == 0:
@@ -312,8 +298,8 @@ def interest_coverage_ratio(
 
 
 def interest_coverage_label(
-    icr: Optional[float],
-) -> Optional[str]:
+    icr: float | None,
+) -> str | None:
     """
     Return Debt Free label when ICR is None.
 
@@ -327,7 +313,7 @@ def interest_coverage_label(
 
 
 def interest_coverage_warning(
-    icr: Optional[float],
+    icr: float | None,
 ) -> bool:
     """
     Returns True when ICR < 1.5.
@@ -343,8 +329,9 @@ def interest_coverage_warning(
 # FINANCIALS SECTOR
 # ============================================================
 
+
 def is_financials_sector(
-    broad_sector: Optional[str],
+    broad_sector: str | None,
 ) -> bool:
     """
     Check whether a company belongs to Financials sector.
@@ -360,8 +347,8 @@ def is_financials_sector(
 
 
 def high_leverage_flag(
-    debt_equity: Optional[float] = None,
-    broad_sector: Optional[str] = None,
+    debt_equity: float | None = None,
+    broad_sector: str | None = None,
 ) -> bool:
     """
     High leverage flag.
@@ -388,10 +375,11 @@ def high_leverage_flag(
 # EFFICIENCY RATIOS
 # ============================================================
 
+
 def net_debt(
     borrowings: float,
     investments: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Net Debt.
 
@@ -413,7 +401,7 @@ def net_debt(
 def asset_turnover(
     sales: float,
     total_assets: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Asset Turnover.
 
@@ -439,6 +427,7 @@ def asset_turnover(
 # LEVERAGE + EFFICIENCY ENGINE
 # ============================================================
 
+
 def calculate_leverage_efficiency_ratios(
     borrowings: float,
     equity_capital: float,
@@ -449,7 +438,7 @@ def calculate_leverage_efficiency_ratios(
     investments: float,
     sales: float,
     total_assets: float,
-    broad_sector: Optional[str] = None,
+    broad_sector: str | None = None,
 ) -> dict:
     """
     Calculate leverage and efficiency KPIs.
@@ -495,6 +484,7 @@ def calculate_leverage_efficiency_ratios(
 # PROFITABILITY ENGINE
 # ============================================================
 
+
 def calculate_profitability_ratios(
     net_profit: float,
     sales: float,
@@ -504,7 +494,7 @@ def calculate_profitability_ratios(
     reserves: float,
     borrowings: float,
     total_assets: float,
-    source_opm: Optional[float] = None,
+    source_opm: float | None = None,
 ) -> dict:
     """
     Calculate profitability KPIs.
@@ -561,9 +551,10 @@ def calculate_profitability_ratios(
 # ROCE CROSS-CHECK
 # ============================================================
 
+
 def check_roce_crosscheck(
-    calculated_roce: Optional[float],
-    source_roce: Optional[float],
+    calculated_roce: float | None,
+    source_roce: float | None,
     tolerance: float = 5.0,
 ) -> dict:
     """
@@ -598,9 +589,10 @@ def check_roce_crosscheck(
 # ROE CROSS-CHECK
 # ============================================================
 
+
 def check_roe_crosscheck(
-    calculated_roe: Optional[float],
-    source_roe: Optional[float],
+    calculated_roe: float | None,
+    source_roe: float | None,
     tolerance: float = 5.0,
 ) -> dict:
     """
@@ -631,6 +623,7 @@ def check_roe_crosscheck(
 # ============================================================
 # COMBINED RATIO ENGINE
 # ============================================================
+
 
 def calculate_all_ratios(row: dict) -> dict:
     """
@@ -674,23 +667,23 @@ def calculate_all_ratios(row: dict) -> dict:
 # ============================================================
 
 __all__ = [
-    "net_profit_margin",
-    "operating_profit_margin",
-    "check_opm_crosscheck",
-    "return_on_equity",
-    "return_on_capital_employed",
-    "return_on_assets",
-    "calculate_profitability_ratios",
-    "debt_to_equity",
-    "interest_coverage_ratio",
-    "interest_coverage_label",
-    "interest_coverage_warning",
-    "is_financials_sector",
-    "high_leverage_flag",
-    "calculate_leverage_efficiency_ratios",
-    "net_debt",
     "asset_turnover",
+    "calculate_all_ratios",
+    "calculate_leverage_efficiency_ratios",
+    "calculate_profitability_ratios",
+    "check_opm_crosscheck",
     "check_roce_crosscheck",
     "check_roe_crosscheck",
-    "calculate_all_ratios",
+    "debt_to_equity",
+    "high_leverage_flag",
+    "interest_coverage_label",
+    "interest_coverage_ratio",
+    "interest_coverage_warning",
+    "is_financials_sector",
+    "net_debt",
+    "net_profit_margin",
+    "operating_profit_margin",
+    "return_on_assets",
+    "return_on_capital_employed",
+    "return_on_equity",
 ]

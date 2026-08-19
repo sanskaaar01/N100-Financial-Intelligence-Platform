@@ -18,8 +18,7 @@ Supported edge cases:
 
 from __future__ import annotations
 
-from typing import Optional, Any
-
+from typing import Any
 
 # ============================================================
 # CONSTANTS
@@ -37,7 +36,8 @@ INSUFFICIENT = "INSUFFICIENT"
 # HELPERS
 # ============================================================
 
-def _to_float(value: Any) -> Optional[float]:
+
+def _to_float(value: Any) -> float | None:
     """Safely convert a value to float."""
 
     if value is None:
@@ -57,6 +57,7 @@ def _to_float(value: Any) -> Optional[float]:
 # ============================================================
 # CORE CAGR
 # ============================================================
+
 
 def calculate_cagr(
     start_value: float,
@@ -155,9 +156,7 @@ def calculate_cagr(
     # --------------------------------------------------------
 
     if start_value > 0 and end_value > 0:
-        cagr = (
-            (end_value / start_value) ** (1 / years) - 1
-        ) * 100
+        cagr = ((end_value / start_value) ** (1 / years) - 1) * 100
 
         return {
             "cagr": cagr,
@@ -220,11 +219,12 @@ def calculate_cagr(
 # SIMPLE CAGR VALUE FUNCTION
 # ============================================================
 
+
 def cagr(
     start_value: float,
     end_value: float,
     years: int,
-) -> Optional[float]:
+) -> float | None:
     """
     Return only the CAGR value.
 
@@ -243,6 +243,7 @@ def cagr(
 # ============================================================
 # REVENUE CAGR
 # ============================================================
+
 
 def revenue_cagr(
     start_revenue: float,
@@ -264,6 +265,7 @@ def revenue_cagr(
 # PAT CAGR
 # ============================================================
 
+
 def pat_cagr(
     start_pat: float,
     end_pat: float,
@@ -284,6 +286,7 @@ def pat_cagr(
 # EPS CAGR
 # ============================================================
 
+
 def eps_cagr(
     start_eps: float,
     end_eps: float,
@@ -303,6 +306,7 @@ def eps_cagr(
 # ============================================================
 # TIME WINDOW VALIDATION
 # ============================================================
+
 
 def has_sufficient_years(
     available_years: int,
@@ -380,6 +384,7 @@ def calculate_window_cagr(
 # ALL STANDARD WINDOWS
 # ============================================================
 
+
 def calculate_growth_windows(
     values: list,
 ) -> dict:
@@ -405,10 +410,8 @@ def calculate_growth_windows(
     return {
         "cagr_3yr": result_3["cagr"],
         "cagr_3yr_flag": result_3["flag"],
-
         "cagr_5yr": result_5["cagr"],
         "cagr_5yr_flag": result_5["flag"],
-
         "cagr_10yr": result_10["cagr"],
         "cagr_10yr_flag": result_10["flag"],
     }
@@ -417,6 +420,7 @@ def calculate_growth_windows(
 # ============================================================
 # COMPANY GROWTH METRICS
 # ============================================================
+
 
 def calculate_company_growth(
     revenue_values: list,
@@ -438,28 +442,20 @@ def calculate_company_growth(
     return {
         "revenue_cagr_3yr": revenue["cagr_3yr"],
         "revenue_cagr_3yr_flag": revenue["cagr_3yr_flag"],
-
         "revenue_cagr_5yr": revenue["cagr_5yr"],
         "revenue_cagr_5yr_flag": revenue["cagr_5yr_flag"],
-
         "revenue_cagr_10yr": revenue["cagr_10yr"],
         "revenue_cagr_10yr_flag": revenue["cagr_10yr_flag"],
-
         "pat_cagr_3yr": pat["cagr_3yr"],
         "pat_cagr_3yr_flag": pat["cagr_3yr_flag"],
-
         "pat_cagr_5yr": pat["cagr_5yr"],
         "pat_cagr_5yr_flag": pat["cagr_5yr_flag"],
-
         "pat_cagr_10yr": pat["cagr_10yr"],
         "pat_cagr_10yr_flag": pat["cagr_10yr_flag"],
-
         "eps_cagr_3yr": eps["cagr_3yr"],
         "eps_cagr_3yr_flag": eps["cagr_3yr_flag"],
-
         "eps_cagr_5yr": eps["cagr_5yr"],
         "eps_cagr_5yr_flag": eps["cagr_5yr_flag"],
-
         "eps_cagr_10yr": eps["cagr_10yr"],
         "eps_cagr_10yr_flag": eps["cagr_10yr_flag"],
     }
@@ -470,22 +466,19 @@ def calculate_company_growth(
 # ============================================================
 
 __all__ = [
-    "POSITIVE",
-    "DECLINE_TO_LOSS",
-    "TURNAROUND",
     "BOTH_NEGATIVE",
-    "ZERO_BASE",
+    "DECLINE_TO_LOSS",
     "INSUFFICIENT",
-
-    "calculate_cagr",
+    "POSITIVE",
+    "TURNAROUND",
+    "ZERO_BASE",
     "cagr",
-
-    "revenue_cagr",
-    "pat_cagr",
-    "eps_cagr",
-
-    "has_sufficient_years",
-    "calculate_window_cagr",
-    "calculate_growth_windows",
+    "calculate_cagr",
     "calculate_company_growth",
+    "calculate_growth_windows",
+    "calculate_window_cagr",
+    "eps_cagr",
+    "has_sufficient_years",
+    "pat_cagr",
+    "revenue_cagr",
 ]

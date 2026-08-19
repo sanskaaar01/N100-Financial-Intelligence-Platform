@@ -1,31 +1,27 @@
-﻿from pathlib import Path
-import sqlite3
-import pandas as pd
-import numpy as np
+﻿import sqlite3
+from pathlib import Path
 
+import matplotlib
+import numpy as np
+import pandas as pd
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    Image,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
-    KeepTogether,
-    Image,
 )
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 
-import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
-
 
 # ============================================================
 # PATHS
@@ -71,6 +67,7 @@ WHITE = colors.white
 # DATABASE
 # ============================================================
 
+
 def get_connection():
     return sqlite3.connect(DB_PATH)
 
@@ -87,6 +84,7 @@ def query_df(sql, params=()):
 # ============================================================
 # HELPERS
 # ============================================================
+
 
 def clean_number(value):
 
@@ -128,10 +126,7 @@ def latest_row(df):
 
     temp = df.copy()
 
-    temp["_year_num"] = pd.to_numeric(
-        temp["year"],
-        errors="coerce"
-    )
+    temp["_year_num"] = pd.to_numeric(temp["year"], errors="coerce")
 
     temp = temp.sort_values("_year_num")
 
@@ -143,15 +138,13 @@ def numeric_series(df, column):
     if column not in df.columns:
         return pd.Series(dtype=float)
 
-    return pd.to_numeric(
-        df[column],
-        errors="coerce"
-    )
+    return pd.to_numeric(df[column], errors="coerce")
 
 
 # ============================================================
 # COMPANY DATA
 # ============================================================
+
 
 def load_company(company_id):
 
@@ -165,9 +158,7 @@ def load_company(company_id):
     )
 
     if company.empty:
-        raise ValueError(
-            f"Company not found: {company_id}"
-        )
+        raise ValueError(f"Company not found: {company_id}")
 
     company = company.iloc[0]
 
@@ -214,29 +205,19 @@ def load_company(company_id):
 # PROS / CONS
 # ============================================================
 
+
 def load_pros_cons(company_id):
 
     if not PROS_CONS_PATH.exists():
         return [], []
 
-    df = pd.read_csv(
-        PROS_CONS_PATH
-    )
+    df = pd.read_csv(PROS_CONS_PATH)
 
-    df = df[
-        df["company_id"].astype(str)
-        == str(company_id)
-    ]
+    df = df[df["company_id"].astype(str) == str(company_id)]
 
-    pros = df[
-        df["type"].astype(str).str.lower()
-        == "pro"
-    ]
+    pros = df[df["type"].astype(str).str.lower() == "pro"]
 
-    cons = df[
-        df["type"].astype(str).str.lower()
-        == "con"
-    ]
+    cons = df[df["type"].astype(str).str.lower() == "con"]
 
     return (
         pros["text"].dropna().tolist(),
@@ -248,6 +229,7 @@ def load_pros_cons(company_id):
 # CAPITAL ALLOCATION
 # ============================================================
 
+
 def load_capital_allocation(company_id):
 
     if not CASHFLOW_PATH.exists():
@@ -255,24 +237,14 @@ def load_capital_allocation(company_id):
 
     try:
 
-        df = pd.read_excel(
-            CASHFLOW_PATH
-        )
+        df = pd.read_excel(CASHFLOW_PATH)
 
-        row = df[
-            df["company_id"].astype(str)
-            == str(company_id)
-        ]
+        row = df[df["company_id"].astype(str) == str(company_id)]
 
         if row.empty:
             return "N/A"
 
-        return str(
-            row.iloc[0].get(
-                "capital_allocation_label",
-                "N/A"
-            )
-        )
+        return str(row.iloc[0].get("capital_allocation_label", "N/A"))
 
     except Exception:
         return "N/A"
@@ -281,6 +253,7 @@ def load_capital_allocation(company_id):
 # ============================================================
 # KPI CALCULATIONS
 # ============================================================
+
 
 def build_kpis(
     company,
@@ -302,20 +275,11 @@ def build_kpis(
 
     if latest_pnl is not None:
 
-        kpis["Revenue"] = latest_pnl.get(
-            "sales",
-            np.nan
-        )
+        kpis["Revenue"] = latest_pnl.get("sales", np.nan)
 
-        kpis["Net Profit"] = latest_pnl.get(
-            "net_profit",
-            np.nan
-        )
+        kpis["Net Profit"] = latest_pnl.get("net_profit", np.nan)
 
-        kpis["EPS"] = latest_pnl.get(
-            "eps",
-            np.nan
-        )
+        kpis["EPS"] = latest_pnl.get("eps", np.nan)
 
     else:
 
@@ -326,51 +290,27 @@ def build_kpis(
     if latest_ratio is not None:
 
         kpis["ROE"] = latest_ratio.get(
-            "return_on_equity_pct",
-            company.get("roe_percentage", np.nan)
+            "return_on_equity_pct", company.get("roe_percentage", np.nan)
         )
 
-        kpis["OPM"] = latest_ratio.get(
-            "operating_profit_margin_pct",
-            np.nan
-        )
+        kpis["OPM"] = latest_ratio.get("operating_profit_margin_pct", np.nan)
 
-        kpis["D/E"] = latest_ratio.get(
-            "debt_to_equity",
-            np.nan
-        )
+        kpis["D/E"] = latest_ratio.get("debt_to_equity", np.nan)
 
     else:
 
-        kpis["ROE"] = company.get(
-            "roe_percentage",
-            np.nan
-        )
+        kpis["ROE"] = company.get("roe_percentage", np.nan)
 
         kpis["OPM"] = np.nan
         kpis["D/E"] = np.nan
 
     if latest_cf is not None:
 
-        kpis["CFO"] = latest_cf.get(
-            "operating_activity",
-            np.nan
-        )
+        kpis["CFO"] = latest_cf.get("operating_activity", np.nan)
 
-        kpis["FCF"] = (
-            clean_number(
-                latest_cf.get(
-                    "operating_activity",
-                    np.nan
-                )
-            )
-            + clean_number(
-                latest_cf.get(
-                    "investing_activity",
-                    np.nan
-                )
-            )
-        )
+        kpis["FCF"] = clean_number(
+            latest_cf.get("operating_activity", np.nan)
+        ) + clean_number(latest_cf.get("investing_activity", np.nan))
 
     else:
 
@@ -384,6 +324,7 @@ def build_kpis(
 # CHART 1 - REVENUE / PROFIT
 # ============================================================
 
+
 def create_revenue_profit_chart(
     pnl,
     company_id,
@@ -394,33 +335,20 @@ def create_revenue_profit_chart(
 
     data = pnl.copy()
 
-    data["year_num"] = pd.to_numeric(
-        data["year"],
-        errors="coerce"
-    )
+    data["year_num"] = pd.to_numeric(data["year"], errors="coerce")
 
-    data["sales_num"] = pd.to_numeric(
-        data["sales"],
-        errors="coerce"
-    )
+    data["sales_num"] = pd.to_numeric(data["sales"], errors="coerce")
 
-    data["profit_num"] = pd.to_numeric(
-        data["net_profit"],
-        errors="coerce"
-    )
+    data["profit_num"] = pd.to_numeric(data["net_profit"], errors="coerce")
 
-    data = data.dropna(
-        subset=["year_num"]
-    ).sort_values("year_num")
+    data = data.dropna(subset=["year_num"]).sort_values("year_num")
 
     data = data.tail(10)
 
     if data.empty:
         return None
 
-    fig, ax = plt.subplots(
-        figsize=(8, 2.8)
-    )
+    fig, ax = plt.subplots(figsize=(8, 2.8))
 
     x = np.arange(len(data))
 
@@ -449,10 +377,7 @@ def create_revenue_profit_chart(
         fontsize=7,
     )
 
-    ax.set_ylabel(
-        "₹ Crore",
-        fontsize=8
-    )
+    ax.set_ylabel("₹ Crore", fontsize=8)
 
     ax.set_title(
         "10-Year Revenue & Net Profit",
@@ -460,10 +385,7 @@ def create_revenue_profit_chart(
         fontweight="bold",
     )
 
-    ax.grid(
-        axis="y",
-        alpha=0.2
-    )
+    ax.grid(axis="y", alpha=0.2)
 
     ax.legend(
         fontsize=7,
@@ -489,6 +411,7 @@ def create_revenue_profit_chart(
 # CHART 2 - ROE / ROCE
 # ============================================================
 
+
 def create_return_chart(
     ratios,
     company_id,
@@ -499,19 +422,11 @@ def create_return_chart(
 
     data = ratios.copy()
 
-    data["year_num"] = pd.to_numeric(
-        data["year"],
-        errors="coerce"
-    )
+    data["year_num"] = pd.to_numeric(data["year"], errors="coerce")
 
-    data["roe_num"] = pd.to_numeric(
-        data["return_on_equity_pct"],
-        errors="coerce"
-    )
+    data["roe_num"] = pd.to_numeric(data["return_on_equity_pct"], errors="coerce")
 
-    data = data.dropna(
-        subset=["year_num"]
-    ).sort_values("year_num")
+    data = data.dropna(subset=["year_num"]).sort_values("year_num")
 
     data = data.tail(10)
 
@@ -532,9 +447,7 @@ def create_return_chart(
             roce_col = col
             break
 
-    fig, ax = plt.subplots(
-        figsize=(8, 2.8)
-    )
+    fig, ax = plt.subplots(figsize=(8, 2.8))
 
     ax.plot(
         data["year_num"],
@@ -546,10 +459,7 @@ def create_return_chart(
 
     if roce_col:
 
-        data["roce_num"] = pd.to_numeric(
-            data[roce_col],
-            errors="coerce"
-        )
+        data["roce_num"] = pd.to_numeric(data[roce_col], errors="coerce")
 
         ax.plot(
             data["year_num"],
@@ -565,18 +475,11 @@ def create_return_chart(
         fontweight="bold",
     )
 
-    ax.set_ylabel(
-        "%",
-        fontsize=8
-    )
+    ax.set_ylabel("%", fontsize=8)
 
-    ax.grid(
-        alpha=0.2
-    )
+    ax.grid(alpha=0.2)
 
-    ax.legend(
-        fontsize=7
-    )
+    ax.legend(fontsize=7)
 
     fig.tight_layout()
 
@@ -597,6 +500,7 @@ def create_return_chart(
 # BALANCE SHEET CHART
 # ============================================================
 
+
 def create_balance_chart(
     bs,
     company_id,
@@ -607,38 +511,24 @@ def create_balance_chart(
 
     data = bs.copy()
 
-    data["year_num"] = pd.to_numeric(
-        data["year"],
-        errors="coerce"
-    )
+    data["year_num"] = pd.to_numeric(data["year"], errors="coerce")
 
-    data = data.dropna(
-        subset=["year_num"]
-    ).sort_values("year_num")
+    data = data.dropna(subset=["year_num"]).sort_values("year_num")
 
     data = data.tail(10)
 
     if data.empty:
         return None
 
-    equity = (
-        numeric_series(data, "equity_capital").fillna(0)
-        + numeric_series(data, "reserves").fillna(0)
-    )
-
-    borrowings = numeric_series(
-        data,
-        "borrowings"
+    equity = numeric_series(data, "equity_capital").fillna(0) + numeric_series(
+        data, "reserves"
     ).fillna(0)
 
-    other = numeric_series(
-        data,
-        "other_liabilities"
-    ).fillna(0)
+    borrowings = numeric_series(data, "borrowings").fillna(0)
 
-    fig, ax = plt.subplots(
-        figsize=(8, 2.8)
-    )
+    other = numeric_series(data, "other_liabilities").fillna(0)
+
+    fig, ax = plt.subplots(figsize=(8, 2.8))
 
     x = np.arange(len(data))
 
@@ -671,10 +561,7 @@ def create_balance_chart(
         fontsize=7,
     )
 
-    ax.set_ylabel(
-        "₹ Crore",
-        fontsize=8
-    )
+    ax.set_ylabel("₹ Crore", fontsize=8)
 
     ax.set_title(
         "Balance Sheet Composition",
@@ -682,14 +569,9 @@ def create_balance_chart(
         fontweight="bold",
     )
 
-    ax.legend(
-        fontsize=7
-    )
+    ax.legend(fontsize=7)
 
-    ax.grid(
-        axis="y",
-        alpha=0.2
-    )
+    ax.grid(axis="y", alpha=0.2)
 
     fig.tight_layout()
 
@@ -709,6 +591,7 @@ def create_balance_chart(
 # ============================================================
 # CASH FLOW CHART
 # ============================================================
+
 
 def create_cashflow_chart(
     cf,
@@ -731,40 +614,15 @@ def create_cashflow_chart(
     ]
 
     values = [
-        clean_number(
-            row.get(
-                "operating_activity",
-                np.nan
-            )
-        ),
-        clean_number(
-            row.get(
-                "investing_activity",
-                np.nan
-            )
-        ),
-        clean_number(
-            row.get(
-                "financing_activity",
-                np.nan
-            )
-        ),
-        clean_number(
-            row.get(
-                "net_cash_flow",
-                np.nan
-            )
-        ),
+        clean_number(row.get("operating_activity", np.nan)),
+        clean_number(row.get("investing_activity", np.nan)),
+        clean_number(row.get("financing_activity", np.nan)),
+        clean_number(row.get("net_cash_flow", np.nan)),
     ]
 
-    values = [
-        0 if pd.isna(v) else v
-        for v in values
-    ]
+    values = [0 if pd.isna(v) else v for v in values]
 
-    fig, ax = plt.subplots(
-        figsize=(8, 2.6)
-    )
+    fig, ax = plt.subplots(figsize=(8, 2.6))
 
     x = np.arange(len(labels))
 
@@ -820,6 +678,7 @@ def create_cashflow_chart(
 # PDF HEADER / FOOTER
 # ============================================================
 
+
 def draw_page_header(
     canvas,
     doc,
@@ -838,9 +697,7 @@ def draw_page_header(
         stroke=0,
     )
 
-    canvas.setFillColor(
-        colors.HexColor("#98A2B3")
-    )
+    canvas.setFillColor(colors.HexColor("#98A2B3"))
 
     canvas.setFont(
         "Helvetica",
@@ -860,12 +717,12 @@ def draw_page_header(
 # STYLES
 # ============================================================
 
+
 def build_styles():
 
     styles = getSampleStyleSheet()
 
     return {
-
         "title": ParagraphStyle(
             "title",
             parent=styles["Heading1"],
@@ -875,7 +732,6 @@ def build_styles():
             textColor=WHITE,
             spaceAfter=2,
         ),
-
         "subtitle": ParagraphStyle(
             "subtitle",
             parent=styles["Normal"],
@@ -884,7 +740,6 @@ def build_styles():
             leading=10,
             textColor=WHITE,
         ),
-
         "section": ParagraphStyle(
             "section",
             parent=styles["Heading2"],
@@ -895,7 +750,6 @@ def build_styles():
             spaceBefore=3,
             spaceAfter=4,
         ),
-
         "body": ParagraphStyle(
             "body",
             parent=styles["BodyText"],
@@ -904,7 +758,6 @@ def build_styles():
             leading=10,
             textColor=DARK,
         ),
-
         "small": ParagraphStyle(
             "small",
             parent=styles["BodyText"],
@@ -913,7 +766,6 @@ def build_styles():
             leading=8,
             textColor=GREY,
         ),
-
         "bullet": ParagraphStyle(
             "bullet",
             parent=styles["BodyText"],
@@ -925,7 +777,6 @@ def build_styles():
             textColor=DARK,
             spaceAfter=2,
         ),
-
         "kpi_value": ParagraphStyle(
             "kpi_value",
             parent=styles["BodyText"],
@@ -935,7 +786,6 @@ def build_styles():
             alignment=TA_CENTER,
             textColor=NAVY,
         ),
-
         "kpi_label": ParagraphStyle(
             "kpi_label",
             parent=styles["BodyText"],
@@ -945,7 +795,6 @@ def build_styles():
             alignment=TA_CENTER,
             textColor=GREY,
         ),
-
         "badge": ParagraphStyle(
             "badge",
             parent=styles["BodyText"],
@@ -961,6 +810,7 @@ def build_styles():
 # ============================================================
 # KPI TILE
 # ============================================================
+
 
 def kpi_tile(
     label,
@@ -1031,32 +881,18 @@ def kpi_tile(
 # BUILD TEARSHEET
 # ============================================================
 
+
 def generate_tearsheet(
     company_id,
 ):
 
-    company, pnl, bs, cf, ratios = load_company(
-        company_id
-    )
+    company, pnl, bs, cf, ratios = load_company(company_id)
 
-    company_name = str(
-        company.get(
-            "company_name",
-            company_id
-        )
-    )
+    company_name = str(company.get("company_name", company_id))
 
-    sector = str(
-        company.get(
-            "sector",
-            "Unknown"
-        )
-    )
+    sector = str(company.get("sector", "Unknown"))
 
-    output_path = (
-        OUTPUT_DIR
-        / f"{safe_filename(company_id)}_tearsheet.pdf"
-    )
+    output_path = OUTPUT_DIR / f"{safe_filename(company_id)}_tearsheet.pdf"
 
     styles = build_styles()
 
@@ -1068,13 +904,9 @@ def generate_tearsheet(
         ratios,
     )
 
-    pros, cons = load_pros_cons(
-        company_id
-    )
+    pros, cons = load_pros_cons(company_id)
 
-    capital_label = load_capital_allocation(
-        company_id
-    )
+    capital_label = load_capital_allocation(company_id)
 
     revenue_chart = create_revenue_profit_chart(
         pnl,
@@ -1128,9 +960,7 @@ def generate_tearsheet(
                 ]
             ]
         ],
-        colWidths=[
-            PAGE_WIDTH - 2 * MARGIN
-        ],
+        colWidths=[PAGE_WIDTH - 2 * MARGIN],
     )
 
     header.setStyle(
@@ -1193,11 +1023,8 @@ def generate_tearsheet(
             kpi_tile(
                 "ROE",
                 (
-                    fmt(kpis["ROE"])
-                    + "%"
-                    if not pd.isna(
-                        clean_number(kpis["ROE"])
-                    )
+                    fmt(kpis["ROE"]) + "%"
+                    if not pd.isna(clean_number(kpis["ROE"]))
                     else "N/A"
                 ),
                 styles,
@@ -1207,11 +1034,8 @@ def generate_tearsheet(
             kpi_tile(
                 "OPM",
                 (
-                    fmt(kpis["OPM"])
-                    + "%"
-                    if not pd.isna(
-                        clean_number(kpis["OPM"])
-                    )
+                    fmt(kpis["OPM"]) + "%"
+                    if not pd.isna(clean_number(kpis["OPM"]))
                     else "N/A"
                 ),
                 styles,
@@ -1311,9 +1135,7 @@ def generate_tearsheet(
             )
         )
 
-    story.append(
-        PageBreak()
-    )
+    story.append(PageBreak())
 
     # ========================================================
     # PAGE 2 - BALANCE SHEET
@@ -1363,9 +1185,7 @@ def generate_tearsheet(
                 )
             ]
         ],
-        colWidths=[
-            PAGE_WIDTH - 2 * MARGIN
-        ],
+        colWidths=[PAGE_WIDTH - 2 * MARGIN],
     )
 
     capital_badge.setStyle(
@@ -1414,7 +1234,7 @@ def generate_tearsheet(
 
         pros_text.append(
             Paragraph(
-                f"• {str(text)}",
+                f"• {text!s}",
                 styles["bullet"],
             )
         )
@@ -1434,7 +1254,7 @@ def generate_tearsheet(
 
         cons_text.append(
             Paragraph(
-                f"• {str(text)}",
+                f"• {text!s}",
                 styles["bullet"],
             )
         )
@@ -1456,13 +1276,9 @@ def generate_tearsheet(
                     styles["body"],
                 )
             ],
-            [
-                pros_text
-            ],
+            [pros_text],
         ],
-        colWidths=[
-            87 * mm
-        ],
+        colWidths=[87 * mm],
     )
 
     pros_box.setStyle(
@@ -1529,13 +1345,9 @@ def generate_tearsheet(
                     styles["body"],
                 )
             ],
-            [
-                cons_text
-            ],
+            [cons_text],
         ],
-        colWidths=[
-            87 * mm
-        ],
+        colWidths=[87 * mm],
     )
 
     cons_box.setStyle(
@@ -1651,6 +1463,7 @@ def generate_tearsheet(
 # TEST 5 COMPANIES
 # ============================================================
 
+
 def main():
 
     test_companies = [
@@ -1673,39 +1486,19 @@ def main():
 
         try:
 
-            path = generate_tearsheet(
-                company_id
-            )
+            path = generate_tearsheet(company_id)
 
             size = path.stat().st_size
 
-            print(
-                f"✅ {company_id}: "
-                f"{size:,} bytes"
-            )
+            print(f"✅ {company_id}: " f"{size:,} bytes")
 
-            results.append(
-                (
-                    company_id,
-                    True,
-                    size
-                )
-            )
+            results.append((company_id, True, size))
 
         except Exception as exc:
 
-            print(
-                f"❌ {company_id}: "
-                f"{type(exc).__name__}: {exc}"
-            )
+            print(f"❌ {company_id}: " f"{type(exc).__name__}: {exc}")
 
-            results.append(
-                (
-                    company_id,
-                    False,
-                    0
-                )
-            )
+            results.append((company_id, False, 0))
 
     print()
     print("========================================")
@@ -1719,37 +1512,25 @@ def main():
 
         if ok:
 
-            print(
-                f"PASS  {company_id:<12} "
-                f"{size:,} bytes"
-            )
+            print(f"PASS  {company_id:<12} " f"{size:,} bytes")
 
             passed += 1
 
         else:
 
-            print(
-                f"FAIL  {company_id}"
-            )
+            print(f"FAIL  {company_id}")
 
     print()
 
     if passed == len(test_companies):
 
-        print(
-            "✅ ALL 5 TEARSHEETS GENERATED"
-        )
+        print("✅ ALL 5 TEARSHEETS GENERATED")
 
-        print(
-            "Next: VISUAL CHECK OF THE PDFs"
-        )
+        print("Next: VISUAL CHECK OF THE PDFs")
 
     else:
 
-        print(
-            f"❌ {len(test_companies) - passed} "
-            "tearsheet(s) failed"
-        )
+        print(f"❌ {len(test_companies) - passed} " "tearsheet(s) failed")
 
         raise SystemExit(1)
 

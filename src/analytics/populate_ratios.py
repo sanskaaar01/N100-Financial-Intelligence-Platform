@@ -1,5 +1,5 @@
-import sqlite3
 import math
+import sqlite3
 
 DB = "db/nifty100.db"
 
@@ -161,12 +161,9 @@ def main():
 
         company = str(r[0])
 
-        history.setdefault(company, []).append({
-            "year": str(r[1]),
-            "sales": num(r[2]),
-            "pat": num(r[6]),
-            "eps": num(r[7])
-        })
+        history.setdefault(company, []).append(
+            {"year": str(r[1]), "sales": num(r[2]), "pat": num(r[6]), "eps": num(r[7])}
+        )
 
     for company in history:
         history[company].sort(key=lambda x: x["year"])
@@ -246,11 +243,7 @@ def main():
 
         roe = None
 
-        if (
-            equity_capital is not None
-            and reserves is not None
-            and pat is not None
-        ):
+        if equity_capital is not None and reserves is not None and pat is not None:
             equity = equity_capital + reserves
 
             if equity > 0:
@@ -298,11 +291,7 @@ def main():
 
         turnover = None
 
-        if (
-            sales is not None
-            and total_assets is not None
-            and total_assets != 0
-        ):
+        if sales is not None and total_assets is not None and total_assets != 0:
             turnover = sales / total_assets
 
         # --------------------------------------------------------
@@ -342,50 +331,27 @@ def main():
             start = company_history[current_index - 5]
             end = company_history[current_index]
 
-            revenue_cagr = cagr(
-                start["sales"],
-                end["sales"],
-                5
-            )
+            revenue_cagr = cagr(start["sales"], end["sales"], 5)
 
-            pat_cagr = cagr(
-                start["pat"],
-                end["pat"],
-                5
-            )
+            pat_cagr = cagr(start["pat"], end["pat"], 5)
 
-            eps_cagr = cagr(
-                start["eps"],
-                end["eps"],
-                5
-            )
+            eps_cagr = cagr(start["eps"], end["eps"], 5)
 
-            if (
-                revenue_cagr is not None
-                or pat_cagr is not None
-                or eps_cagr is not None
-            ):
+            if revenue_cagr is not None or pat_cagr is not None or eps_cagr is not None:
                 cagr_count += 1
 
         # --------------------------------------------------------
         # Composite Quality Score
         # --------------------------------------------------------
 
-        score = quality_score(
-            roe,
-            npm,
-            de,
-            icr,
-            turnover,
-            revenue_cagr,
-            pat_cagr
-        )
+        score = quality_score(roe, npm, de, icr, turnover, revenue_cagr, pat_cagr)
 
         # --------------------------------------------------------
         # UPDATE DATABASE
         # --------------------------------------------------------
 
-        cur.execute("""
+        cur.execute(
+            """
             UPDATE financial_ratios
             SET
                 net_profit_margin_pct = ?,
@@ -402,22 +368,24 @@ def main():
                 eps_cagr_5yr = ?,
                 composite_quality_score = ?
             WHERE id = ?
-        """, (
-            npm,
-            opm,
-            roe,
-            de,
-            icr,
-            turnover,
-            fcf,
-            capex,
-            eps,
-            revenue_cagr,
-            pat_cagr,
-            eps_cagr,
-            score,
-            ratio_id
-        ))
+        """,
+            (
+                npm,
+                opm,
+                roe,
+                de,
+                icr,
+                turnover,
+                fcf,
+                capex,
+                eps,
+                revenue_cagr,
+                pat_cagr,
+                eps_cagr,
+                score,
+                ratio_id,
+            ),
+        )
 
         updated += 1
 
@@ -435,9 +403,7 @@ def main():
     print("DAY 12 VERIFICATION")
     print("=" * 70)
 
-    total = cur.execute(
-        "SELECT COUNT(*) FROM financial_ratios"
-    ).fetchone()[0]
+    total = cur.execute("SELECT COUNT(*) FROM financial_ratios").fetchone()[0]
 
     print("Total rows :", total)
     print("Rows updated :", updated)
@@ -457,7 +423,7 @@ def main():
         "revenue_cagr_5yr",
         "pat_cagr_5yr",
         "eps_cagr_5yr",
-        "composite_quality_score"
+        "composite_quality_score",
     ]
 
     print()
@@ -465,13 +431,11 @@ def main():
 
     for column in columns:
 
-        count = cur.execute(
-            f"""
+        count = cur.execute(f"""
             SELECT COUNT(*)
             FROM financial_ratios
             WHERE "{column}" IS NOT NULL
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
 
         print(f"{column:35} {count}")
 
@@ -479,9 +443,7 @@ def main():
     # FK check
     # ------------------------------------------------------------
 
-    fk = cur.execute(
-        "PRAGMA foreign_key_check"
-    ).fetchall()
+    fk = cur.execute("PRAGMA foreign_key_check").fetchall()
 
     print()
     print("Foreign key errors :", len(fk))

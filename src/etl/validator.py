@@ -14,8 +14,9 @@ Important:
 - CRITICAL rules reject invalid rows.
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
+
 import pandas as pd
 
 
@@ -45,29 +46,23 @@ class DataValidator:
     # GENERAL HELPERS
     # ==========================================================
 
-    def log_failure(
-        self,
-        rule,
-        severity,
-        filename,
-        row,
-        message
-    ):
-        self.failures.append({
-            "rule": rule,
-            "severity": severity,
-            "file": filename,
-            "row": row,
-            "message": message
-        })
+    def log_failure(self, rule, severity, filename, row, message):
+        self.failures.append(
+            {
+                "rule": rule,
+                "severity": severity,
+                "file": filename,
+                "row": row,
+                "message": message,
+            }
+        )
 
     def _clean_columns(self, df):
 
         df = df.copy()
 
         df.columns = (
-            df.columns
-            .astype(str)
+            df.columns.astype(str)
             .str.strip()
             .str.lower()
             .str.replace(" ", "_", regex=False)
@@ -100,16 +95,9 @@ class DataValidator:
 
         company_id = str(company_id).strip().upper()
 
-        company_col = self._find_column(
-            companies_df,
-            ["company_id", "id", "ticker"]
-        )
+        company_col = self._find_column(companies_df, ["company_id", "id", "ticker"])
 
-        sector_cols = [
-            "broad_sector",
-            "sector",
-            "sector_name"
-        ]
+        sector_cols = ["broad_sector", "sector", "sector_name"]
 
         sector_col = None
 
@@ -122,19 +110,13 @@ class DataValidator:
             return False
 
         matches = companies_df[
-            companies_df[company_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
-            .eq(company_id)
+            companies_df[company_col].astype(str).str.strip().str.upper().eq(company_id)
         ]
 
         if matches.empty:
             return False
 
-        sector = str(
-            matches.iloc[0][sector_col]
-        ).strip().lower()
+        sector = str(matches.iloc[0][sector_col]).strip().lower()
 
         return sector == "financials"
 
@@ -147,17 +129,12 @@ class DataValidator:
 
         df = df.copy()
 
-        id_col = self._find_column(
-            df,
-            ["id", "company_id", "ticker"]
-        )
+        id_col = self._find_column(df, ["id", "company_id", "ticker"])
 
         if id_col is None:
             return df
 
-        duplicate_mask = df[id_col].duplicated(
-            keep=False
-        )
+        duplicate_mask = df[id_col].duplicated(keep=False)
 
         for index in df.index[duplicate_mask]:
 
@@ -166,7 +143,7 @@ class DataValidator:
                 "CRITICAL",
                 filename,
                 index + 2,
-                "Duplicate company primary key."
+                "Duplicate company primary key.",
             )
 
         return df
@@ -185,31 +162,17 @@ class DataValidator:
 
         df = df.copy()
 
-        company_col = self._find_column(
-            df,
-            ["company_id", "ticker"]
-        )
+        company_col = self._find_column(df, ["company_id", "ticker"])
 
-        year_col = self._find_column(
-            df,
-            ["year", "financial_year"]
-        )
+        year_col = self._find_column(df, ["year", "financial_year"])
 
         if company_col is None or year_col is None:
             return df
 
         # Normalise company IDs for comparison.
-        df[company_col] = (
-            df[company_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
-        )
+        df[company_col] = df[company_col].astype(str).str.strip().str.upper()
 
-        duplicate_mask = df.duplicated(
-            subset=[company_col, year_col],
-            keep=False
-        )
+        duplicate_mask = df.duplicated(subset=[company_col, year_col], keep=False)
 
         duplicate_rows = df.loc[duplicate_mask]
 
@@ -224,15 +187,11 @@ class DataValidator:
                 "WARNING",
                 filename,
                 index + 2,
-                f"Duplicate ({company}, {year}) - "
-                f"keeping last occurrence."
+                f"Duplicate ({company}, {year}) - " f"keeping last occurrence.",
             )
 
         # KEEP LAST occurrence.
-        df = df.drop_duplicates(
-            subset=[company_col, year_col],
-            keep="last"
-        )
+        df = df.drop_duplicates(subset=[company_col, year_col], keep="last")
 
         return df.reset_index(drop=True)
 
@@ -241,12 +200,7 @@ class DataValidator:
     # FOREIGN KEY INTEGRITY
     # ==========================================================
 
-    def dq03_fk_integrity(
-        self,
-        df,
-        filename,
-        companies_df
-    ):
+    def dq03_fk_integrity(self, df, filename, companies_df):
 
         if companies_df is None:
             return df
@@ -254,50 +208,31 @@ class DataValidator:
         df = df.copy()
         companies_df = companies_df.copy()
 
-        child_col = self._find_column(
-            df,
-            ["company_id", "ticker"]
-        )
+        child_col = self._find_column(df, ["company_id", "ticker"])
 
-        parent_col = self._find_column(
-            companies_df,
-            ["company_id", "id", "ticker"]
-        )
+        parent_col = self._find_column(companies_df, ["company_id", "id", "ticker"])
 
         if child_col is None or parent_col is None:
             return df
 
         valid_ids = set(
-            companies_df[parent_col]
-            .dropna()
-            .astype(str)
-            .str.strip()
-            .str.upper()
+            companies_df[parent_col].dropna().astype(str).str.strip().str.upper()
         )
 
-        child_ids = (
-            df[child_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
-        )
+        child_ids = df[child_col].astype(str).str.strip().str.upper()
 
         invalid_mask = ~child_ids.isin(valid_ids)
 
         for index in df.index[invalid_mask]:
 
-            company_id = df.loc[
-                index,
-                child_col
-            ]
+            company_id = df.loc[index, child_col]
 
             self.log_failure(
                 "DQ-03",
                 "CRITICAL",
                 filename,
                 index + 2,
-                f"company_id '{company_id}' "
-                f"does not exist in companies table."
+                f"company_id '{company_id}' " f"does not exist in companies table.",
             )
 
         # Reject orphan rows.
@@ -310,11 +245,7 @@ class DataValidator:
     # BALANCE SHEET BALANCE
     # ==========================================================
 
-    def dq04_balance_sheet(
-        self,
-        df,
-        filename
-    ):
+    def dq04_balance_sheet(self, df, filename):
 
         if "total_assets" not in df.columns:
             return df
@@ -324,13 +255,9 @@ class DataValidator:
 
         for index, row in df.iterrows():
 
-            assets = self._numeric(
-                row.get("total_assets")
-            )
+            assets = self._numeric(row.get("total_assets"))
 
-            liabilities = self._numeric(
-                row.get("total_liabilities")
-            )
+            liabilities = self._numeric(row.get("total_liabilities"))
 
             if assets is None or liabilities is None:
                 continue
@@ -338,10 +265,7 @@ class DataValidator:
             if assets == 0:
                 continue
 
-            difference = (
-                abs(assets - liabilities)
-                / abs(assets)
-            )
+            difference = abs(assets - liabilities) / abs(assets)
 
             if difference >= 0.01:
 
@@ -350,8 +274,7 @@ class DataValidator:
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Balance sheet mismatch "
-                    f"{difference * 100:.2f}%."
+                    f"Balance sheet mismatch " f"{difference * 100:.2f}%.",
                 )
 
         return df
@@ -366,32 +289,20 @@ class DataValidator:
         if "opm_percentage" not in df.columns:
             return df
 
-        sales_col = self._find_column(
-            df,
-            ["sales", "revenue"]
-        )
+        sales_col = self._find_column(df, ["sales", "revenue"])
 
-        profit_col = self._find_column(
-            df,
-            ["operating_profit", "operating_profit_cr"]
-        )
+        profit_col = self._find_column(df, ["operating_profit", "operating_profit_cr"])
 
         if sales_col is None or profit_col is None:
             return df
 
         for index, row in df.iterrows():
 
-            sales = self._numeric(
-                row.get(sales_col)
-            )
+            sales = self._numeric(row.get(sales_col))
 
-            operating_profit = self._numeric(
-                row.get(profit_col)
-            )
+            operating_profit = self._numeric(row.get(profit_col))
 
-            source_opm = self._numeric(
-                row.get("opm_percentage")
-            )
+            source_opm = self._numeric(row.get("opm_percentage"))
 
             if (
                 sales is None
@@ -401,13 +312,9 @@ class DataValidator:
             ):
                 continue
 
-            computed_opm = (
-                operating_profit / sales
-            ) * 100
+            computed_opm = (operating_profit / sales) * 100
 
-            difference = abs(
-                source_opm - computed_opm
-            )
+            difference = abs(source_opm - computed_opm)
 
             if difference > 1:
 
@@ -416,8 +323,7 @@ class DataValidator:
                     "WARNING",
                     filename,
                     index + 2,
-                    f"OPM cross-check difference "
-                    f"exceeds 1% ({difference:.2f}%)."
+                    f"OPM cross-check difference " f"exceeds 1% ({difference:.2f}%).",
                 )
 
         return df
@@ -427,57 +333,33 @@ class DataValidator:
     # POSITIVE SALES
     # ==========================================================
 
-    def dq06_positive_sales(
-        self,
-        df,
-        filename,
-        companies_df=None
-    ):
+    def dq06_positive_sales(self, df, filename, companies_df=None):
 
-        sales_col = self._find_column(
-            df,
-            ["sales", "revenue"]
-        )
+        sales_col = self._find_column(df, ["sales", "revenue"])
 
-        company_col = self._find_column(
-            df,
-            ["company_id", "ticker"]
-        )
+        company_col = self._find_column(df, ["company_id", "ticker"])
 
         if sales_col is None:
             return df
 
         for index, row in df.iterrows():
 
-            sales = self._numeric(
-                row.get(sales_col)
-            )
+            sales = self._numeric(row.get(sales_col))
 
             if sales is None:
                 continue
 
-            company_id = (
-                row.get(company_col)
-                if company_col
-                else None
-            )
+            company_id = row.get(company_col) if company_col else None
 
             # Financial companies are excluded
             # from this positive-sales warning.
-            if self._is_financial_company(
-                company_id,
-                companies_df
-            ):
+            if self._is_financial_company(company_id, companies_df):
                 continue
 
             if sales <= 0:
 
                 self.log_failure(
-                    "DQ-06",
-                    "WARNING",
-                    filename,
-                    index + 2,
-                    f"Sales <= 0 ({sales})."
+                    "DQ-06", "WARNING", filename, index + 2, f"Sales <= 0 ({sales})."
                 )
 
         return df
@@ -487,46 +369,31 @@ class DataValidator:
     # YEAR FORMAT
     # ==========================================================
 
-    def dq07_year_format(
-        self,
-        df,
-        filename
-    ):
+    def dq07_year_format(self, df, filename):
 
-        year_col = self._find_column(
-            df,
-            ["year", "financial_year"]
-        )
+        year_col = self._find_column(df, ["year", "financial_year"])
 
         if year_col is None:
             return df
 
-        pattern = re.compile(
-            r"^\d{4}-\d{2}$"
-        )
+        pattern = re.compile(r"^\d{4}-\d{2}$")
 
         for index, value in df[year_col].items():
 
             if pd.isna(value):
                 self.log_failure(
-                    "DQ-07",
-                    "CRITICAL",
-                    filename,
-                    index + 2,
-                    "Year is missing."
+                    "DQ-07", "CRITICAL", filename, index + 2, "Year is missing."
                 )
                 continue
 
-            if not pattern.match(
-                str(value).strip()
-            ):
+            if not pattern.match(str(value).strip()):
 
                 self.log_failure(
                     "DQ-07",
                     "CRITICAL",
                     filename,
                     index + 2,
-                    f"Invalid year format: {value}"
+                    f"Invalid year format: {value}",
                 )
 
         return df
@@ -536,16 +403,9 @@ class DataValidator:
     # TICKER FORMAT
     # ==========================================================
 
-    def dq08_ticker_format(
-        self,
-        df,
-        filename
-    ):
+    def dq08_ticker_format(self, df, filename):
 
-        company_col = self._find_column(
-            df,
-            ["company_id", "ticker"]
-        )
+        company_col = self._find_column(df, ["company_id", "ticker"])
 
         if company_col is None:
             return df
@@ -557,22 +417,13 @@ class DataValidator:
             if pd.isna(value):
 
                 self.log_failure(
-                    "DQ-08",
-                    "CRITICAL",
-                    filename,
-                    index + 2,
-                    "Missing company_id."
+                    "DQ-08", "CRITICAL", filename, index + 2, "Missing company_id."
                 )
 
                 valid_mask.append(False)
                 continue
 
-            ticker = (
-                str(value)
-                .strip()
-                .upper()
-                .replace(" ", "")
-            )
+            ticker = str(value).strip().upper().replace(" ", "")
 
             # Normalisation is silent.
             df.at[index, company_col] = ticker
@@ -584,7 +435,7 @@ class DataValidator:
                     "CRITICAL",
                     filename,
                     index + 2,
-                    f"Invalid ticker length: {ticker}"
+                    f"Invalid ticker length: {ticker}",
                 )
 
                 valid_mask.append(False)
@@ -592,63 +443,32 @@ class DataValidator:
             else:
                 valid_mask.append(True)
 
-        return df.loc[valid_mask].reset_index(
-            drop=True
-        )
+        return df.loc[valid_mask].reset_index(drop=True)
 
     # ==========================================================
     # DQ-09
     # NET CASH FLOW CHECK
     # ==========================================================
 
-    def dq09_net_cash(
-        self,
-        df,
-        filename
-    ):
+    def dq09_net_cash(self, df, filename):
 
-        cfo_col = self._find_column(
-            df,
-            ["operating_activity", "cfo"]
-        )
+        cfo_col = self._find_column(df, ["operating_activity", "cfo"])
 
-        cfi_col = self._find_column(
-            df,
-            ["investing_activity", "cfi"]
-        )
+        cfi_col = self._find_column(df, ["investing_activity", "cfi"])
 
-        cff_col = self._find_column(
-            df,
-            ["financing_activity", "cff"]
-        )
+        cff_col = self._find_column(df, ["financing_activity", "cff"])
 
-        net_col = self._find_column(
-            df,
-            ["net_cash_flow"]
-        )
+        net_col = self._find_column(df, ["net_cash_flow"])
 
-        if None in (
-            cfo_col,
-            cfi_col,
-            cff_col,
-            net_col
-        ):
+        if None in (cfo_col, cfi_col, cff_col, net_col):
             return df
 
         for index, row in df.iterrows():
 
-            cfo = self._numeric(
-                row.get(cfo_col)
-            )
-            cfi = self._numeric(
-                row.get(cfi_col)
-            )
-            cff = self._numeric(
-                row.get(cff_col)
-            )
-            net = self._numeric(
-                row.get(net_col)
-            )
+            cfo = self._numeric(row.get(cfo_col))
+            cfi = self._numeric(row.get(cfi_col))
+            cff = self._numeric(row.get(cff_col))
+            net = self._numeric(row.get(net_col))
 
             if None in (cfo, cfi, cff, net):
                 continue
@@ -662,9 +482,7 @@ class DataValidator:
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Net cash mismatch: "
-                    f"source={net}, "
-                    f"computed={computed}."
+                    f"Net cash mismatch: " f"source={net}, " f"computed={computed}.",
                 )
 
                 # Fix in the in-memory DataFrame.
@@ -677,33 +495,23 @@ class DataValidator:
     # NON-NEGATIVE FIXED ASSETS
     # ==========================================================
 
-    def dq10_fixed_assets(
-        self,
-        df,
-        filename
-    ):
+    def dq10_fixed_assets(self, df, filename):
 
         if "fixed_assets" not in df.columns:
             return df
 
-        for index, value in df[
-            "fixed_assets"
-        ].items():
+        for index, value in df["fixed_assets"].items():
 
             numeric_value = self._numeric(value)
 
-            if (
-                numeric_value is not None
-                and numeric_value < 0
-            ):
+            if numeric_value is not None and numeric_value < 0:
 
                 self.log_failure(
                     "DQ-10",
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Negative fixed_assets "
-                    f"({numeric_value}) coerced to 0."
+                    f"Negative fixed_assets " f"({numeric_value}) coerced to 0.",
                 )
 
                 df.at[index, "fixed_assets"] = 0
@@ -715,35 +523,26 @@ class DataValidator:
     # TAX RATE RANGE
     # ==========================================================
 
-    def dq11_tax_rate(
-        self,
-        df,
-        filename
-    ):
+    def dq11_tax_rate(self, df, filename):
 
         if "tax_percentage" not in df.columns:
             return df
 
-        for index, value in df[
-            "tax_percentage"
-        ].items():
+        for index, value in df["tax_percentage"].items():
 
             numeric_value = self._numeric(value)
 
             if numeric_value is None:
                 continue
 
-            if not (
-                0 <= numeric_value <= 60
-            ):
+            if not (0 <= numeric_value <= 60):
 
                 self.log_failure(
                     "DQ-11",
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Tax percentage "
-                    f"out of range: {numeric_value}"
+                    f"Tax percentage " f"out of range: {numeric_value}",
                 )
 
         return df
@@ -753,33 +552,23 @@ class DataValidator:
     # DIVIDEND PAYOUT CAP
     # ==========================================================
 
-    def dq12_dividend_payout(
-        self,
-        df,
-        filename
-    ):
+    def dq12_dividend_payout(self, df, filename):
 
         if "dividend_payout" not in df.columns:
             return df
 
-        for index, value in df[
-            "dividend_payout"
-        ].items():
+        for index, value in df["dividend_payout"].items():
 
             numeric_value = self._numeric(value)
 
-            if (
-                numeric_value is not None
-                and numeric_value > 200
-            ):
+            if numeric_value is not None and numeric_value > 200:
 
                 self.log_failure(
                     "DQ-12",
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Dividend payout "
-                    f"above 200%: {numeric_value}"
+                    f"Dividend payout " f"above 200%: {numeric_value}",
                 )
 
         return df
@@ -793,20 +582,11 @@ class DataValidator:
     # invalid URLs. Actual 404 checking can be performed later.
     # ==========================================================
 
-    def dq13_url(
-        self,
-        df,
-        filename
-    ):
+    def dq13_url(self, df, filename):
 
         url_col = None
 
-        for col in [
-            "annual_report",
-            "annual_report_url",
-            "url",
-            "report_url"
-        ]:
+        for col in ["annual_report", "annual_report_url", "url", "report_url"]:
             if col in df.columns:
                 url_col = col
                 break
@@ -824,18 +604,14 @@ class DataValidator:
             if url == "":
                 continue
 
-            if not re.match(
-                r"^https?://",
-                url,
-                flags=re.IGNORECASE
-            ):
+            if not re.match(r"^https?://", url, flags=re.IGNORECASE):
 
                 self.log_failure(
                     "DQ-13",
                     "WARNING",
                     filename,
                     index + 2,
-                    f"Invalid URL format: {url}"
+                    f"Invalid URL format: {url}",
                 )
 
         return df
@@ -845,27 +621,16 @@ class DataValidator:
     # EPS SIGN CONSISTENCY
     # ==========================================================
 
-    def dq14_eps_sign(
-        self,
-        df,
-        filename
-    ):
+    def dq14_eps_sign(self, df, filename):
 
-        if (
-            "eps" not in df.columns
-            or "net_profit" not in df.columns
-        ):
+        if "eps" not in df.columns or "net_profit" not in df.columns:
             return df
 
         for index, row in df.iterrows():
 
-            eps = self._numeric(
-                row.get("eps")
-            )
+            eps = self._numeric(row.get("eps"))
 
-            net_profit = self._numeric(
-                row.get("net_profit")
-            )
+            net_profit = self._numeric(row.get("net_profit"))
 
             if eps is None or net_profit is None:
                 continue
@@ -877,8 +642,7 @@ class DataValidator:
                     "WARNING",
                     filename,
                     index + 2,
-                    f"EPS sign inconsistent "
-                    f"with positive net profit."
+                    "EPS sign inconsistent " "with positive net profit.",
                 )
 
         return df
@@ -888,27 +652,16 @@ class DataValidator:
     # BSE / ASSET-LIABILITY BALANCE
     # ==========================================================
 
-    def dq15_balance_info(
-        self,
-        df,
-        filename
-    ):
+    def dq15_balance_info(self, df, filename):
 
-        if (
-            "total_assets" not in df.columns
-            or "total_liabilities" not in df.columns
-        ):
+        if "total_assets" not in df.columns or "total_liabilities" not in df.columns:
             return df
 
         for index, row in df.iterrows():
 
-            assets = self._numeric(
-                row.get("total_assets")
-            )
+            assets = self._numeric(row.get("total_assets"))
 
-            liabilities = self._numeric(
-                row.get("total_liabilities")
-            )
+            liabilities = self._numeric(row.get("total_liabilities"))
 
             if assets is None or liabilities is None:
                 continue
@@ -920,8 +673,7 @@ class DataValidator:
                     "INFO",
                     filename,
                     index + 2,
-                    "Total assets and total liabilities "
-                    "are not exactly equal."
+                    "Total assets and total liabilities " "are not exactly equal.",
                 )
 
         return df
@@ -933,97 +685,54 @@ class DataValidator:
     # This is performed against all loaded time-series DataFrames.
     # ==========================================================
 
-    def dq16_coverage(
-        self,
-        pnl_df,
-        bs_df,
-        cf_df
-    ):
+    def dq16_coverage(self, pnl_df, bs_df, cf_df):
 
         company_sets = []
 
-        for df in [
-            pnl_df,
-            bs_df,
-            cf_df
-        ]:
+        for df in [pnl_df, bs_df, cf_df]:
 
             if df is None:
                 continue
 
-            company_col = self._find_column(
-                df,
-                ["company_id", "ticker"]
-            )
+            company_col = self._find_column(df, ["company_id", "ticker"])
 
             if company_col is None:
                 continue
 
             company_sets.append(
-                set(
-                    df[company_col]
-                    .dropna()
-                    .astype(str)
-                    .str.strip()
-                    .str.upper()
-                )
+                set(df[company_col].dropna().astype(str).str.strip().str.upper())
             )
 
         if not company_sets:
             return
 
-        companies = set.union(
-            *company_sets
-        )
+        companies = set.union(*company_sets)
 
         for company in sorted(companies):
 
             counts = []
 
-            for df in [
-                pnl_df,
-                bs_df,
-                cf_df
-            ]:
+            for df in [pnl_df, bs_df, cf_df]:
 
                 if df is None:
                     counts.append(0)
                     continue
 
-                company_col = self._find_column(
-                    df,
-                    ["company_id", "ticker"]
-                )
+                company_col = self._find_column(df, ["company_id", "ticker"])
 
-                year_col = self._find_column(
-                    df,
-                    ["year", "financial_year"]
-                )
+                year_col = self._find_column(df, ["year", "financial_year"])
 
-                if (
-                    company_col is None
-                    or year_col is None
-                ):
+                if company_col is None or year_col is None:
                     counts.append(0)
                     continue
 
                 rows = df[
-                    df[company_col]
-                    .astype(str)
-                    .str.strip()
-                    .str.upper()
-                    .eq(company)
+                    df[company_col].astype(str).str.strip().str.upper().eq(company)
                 ]
 
-                counts.append(
-                    rows[year_col]
-                    .nunique()
-                )
+                counts.append(rows[year_col].nunique())
 
-            for table_count, count in zip(
-                ["P&L", "BS", "CF"],
-                counts
-            ):
+            for table_count, count in zip(["P&L", "BS", "CF"], counts):
 
                 if count < 5:
 
@@ -1032,123 +741,73 @@ class DataValidator:
                         "WARNING",
                         table_count,
                         "",
-                        f"{company} has only "
-                        f"{count} years of data."
+                        f"{company} has only " f"{count} years of data.",
                     )
 
     # ==========================================================
     # VALIDATE ONE DATAFRAME
     # ==========================================================
 
-    def validate_dataframe(
-        self,
-        df,
-        filename,
-        companies_df=None
-    ):
+    def validate_dataframe(self, df, filename, companies_df=None):
 
         df = self._clean_columns(df)
 
         # DQ-08 first so company IDs are standardised.
-        df = self.dq08_ticker_format(
-            df,
-            filename
-        )
+        df = self.dq08_ticker_format(df, filename)
 
         # DQ-02 MUST happen before loading.
         if filename in self.time_series_files:
 
-            df = self.dq02_deduplicate(
-                df,
-                filename
-            )
+            df = self.dq02_deduplicate(df, filename)
 
         # DQ-03
-        df = self.dq03_fk_integrity(
-            df,
-            filename,
-            companies_df
-        )
+        df = self.dq03_fk_integrity(df, filename, companies_df)
 
         # DQ-04
         if "balancesheet" in filename:
-            df = self.dq04_balance_sheet(
-                df,
-                filename
-            )
+            df = self.dq04_balance_sheet(df, filename)
 
-            df = self.dq15_balance_info(
-                df,
-                filename
-            )
+            df = self.dq15_balance_info(df, filename)
 
         # DQ-05 / DQ-06
         if "profitandloss" in filename:
 
-            df = self.dq05_opm(
-                df,
-                filename
-            )
+            df = self.dq05_opm(df, filename)
 
-            df = self.dq06_positive_sales(
-                df,
-                filename,
-                companies_df
-            )
+            df = self.dq06_positive_sales(df, filename, companies_df)
 
         # DQ-07
-        df = self.dq07_year_format(
-            df,
-            filename
-        )
+        df = self.dq07_year_format(df, filename)
 
         # DQ-09
         if "cashflow" in filename:
 
-            df = self.dq09_net_cash(
-                df,
-                filename
-            )
+            df = self.dq09_net_cash(df, filename)
 
         # DQ-10
         if "balancesheet" in filename:
 
-            df = self.dq10_fixed_assets(
-                df,
-                filename
-            )
+            df = self.dq10_fixed_assets(df, filename)
 
         # DQ-11
         if "profitandloss" in filename:
 
-            df = self.dq11_tax_rate(
-                df,
-                filename
-            )
+            df = self.dq11_tax_rate(df, filename)
 
         # DQ-12
         if "profitandloss" in filename:
 
-            df = self.dq12_dividend_payout(
-                df,
-                filename
-            )
+            df = self.dq12_dividend_payout(df, filename)
 
         # DQ-13
         if "documents" in filename:
 
-            df = self.dq13_url(
-                df,
-                filename
-            )
+            df = self.dq13_url(df, filename)
 
         # DQ-14
         if "profitandloss" in filename:
 
-            df = self.dq14_eps_sign(
-                df,
-                filename
-            )
+            df = self.dq14_eps_sign(df, filename)
 
         return df
 
@@ -1156,53 +815,34 @@ class DataValidator:
     # VALIDATE ALL DATA
     # ==========================================================
 
-    def validate_all(
-        self,
-        dataframes
-    ):
+    def validate_all(self, dataframes):
 
         self.failures = []
 
         # Find companies table.
-        companies_df = dataframes.get(
-            "companies.xlsx"
-        )
+        companies_df = dataframes.get("companies.xlsx")
 
         cleaned = {}
 
         # First clean companies.
         if companies_df is not None:
 
-            companies_df = self._clean_columns(
-                companies_df
-            )
+            companies_df = self._clean_columns(companies_df)
 
-            companies_df = self.dq08_ticker_format(
-                companies_df,
-                "companies.xlsx"
-            )
+            companies_df = self.dq08_ticker_format(companies_df, "companies.xlsx")
 
-            companies_df = self.dq01_company_pk(
-                companies_df,
-                "companies.xlsx"
-            )
+            companies_df = self.dq01_company_pk(companies_df, "companies.xlsx")
 
             # Companies themselves must be unique.
             company_col = self._find_column(
-                companies_df,
-                ["company_id", "id", "ticker"]
+                companies_df, ["company_id", "id", "ticker"]
             )
 
             if company_col is not None:
 
-                companies_df = (
-                    companies_df
-                    .drop_duplicates(
-                        subset=[company_col],
-                        keep="last"
-                    )
-                    .reset_index(drop=True)
-                )
+                companies_df = companies_df.drop_duplicates(
+                    subset=[company_col], keep="last"
+                ).reset_index(drop=True)
 
             cleaned["companies.xlsx"] = companies_df
 
@@ -1212,17 +852,13 @@ class DataValidator:
             if filename == "companies.xlsx":
                 continue
 
-            cleaned[filename] = self.validate_dataframe(
-                df,
-                filename,
-                companies_df
-            )
+            cleaned[filename] = self.validate_dataframe(df, filename, companies_df)
 
         # DQ-16 across the three financial statements.
         self.dq16_coverage(
             cleaned.get("profitandloss.xlsx"),
             cleaned.get("balancesheet.xlsx"),
-            cleaned.get("cashflow.xlsx")
+            cleaned.get("cashflow.xlsx"),
         )
 
         return cleaned
@@ -1233,36 +869,19 @@ class DataValidator:
 
     def save_report(self):
 
-        output_file = (
-            self.output_folder
-            / "validation_failures.csv"
-        )
+        output_file = self.output_folder / "validation_failures.csv"
 
-        columns = [
-            "rule",
-            "severity",
-            "file",
-            "row",
-            "message"
-        ]
+        columns = ["rule", "severity", "file", "row", "message"]
 
         if self.failures:
 
-            df = pd.DataFrame(
-                self.failures,
-                columns=columns
-            )
+            df = pd.DataFrame(self.failures, columns=columns)
 
         else:
 
-            df = pd.DataFrame(
-                columns=columns
-            )
+            df = pd.DataFrame(columns=columns)
 
-        df.to_csv(
-            output_file,
-            index=False
-        )
+        df.to_csv(output_file, index=False)
 
         return output_file
 
@@ -1274,22 +893,12 @@ class DataValidator:
 
         if not self.failures:
 
-            return {
-                "total_failures": 0,
-                "critical": 0,
-                "warning": 0
-            }
+            return {"total_failures": 0, "critical": 0, "warning": 0}
 
-        df = pd.DataFrame(
-            self.failures
-        )
+        df = pd.DataFrame(self.failures)
 
         return {
             "total_failures": len(df),
-            "critical": int(
-                (df["severity"] == "CRITICAL").sum()
-            ),
-            "warning": int(
-                (df["severity"] == "WARNING").sum()
-            )
+            "critical": int((df["severity"] == "CRITICAL").sum()),
+            "warning": int((df["severity"] == "WARNING").sum()),
         }

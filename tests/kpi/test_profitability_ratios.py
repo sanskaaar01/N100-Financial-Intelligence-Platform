@@ -1,20 +1,18 @@
 import pytest
 
 from src.analytics.ratios import (
+    check_opm_crosscheck,
     net_profit_margin,
     operating_profit_margin,
-    check_opm_crosscheck,
-    return_on_equity,
-    return_on_capital_employed,
     return_on_assets,
-    is_financials_sector,
-    calculate_profitability_ratios,
+    return_on_capital_employed,
+    return_on_equity,
 )
-
 
 # ============================================================
 # TEST 1 - Normal Net Profit Margin
 # ============================================================
+
 
 def test_net_profit_margin_normal():
     result = net_profit_margin(200, 1000)
@@ -26,6 +24,7 @@ def test_net_profit_margin_normal():
 # TEST 2 - Zero Sales
 # ============================================================
 
+
 def test_net_profit_margin_zero_sales():
     result = net_profit_margin(200, 0)
 
@@ -35,6 +34,7 @@ def test_net_profit_margin_zero_sales():
 # ============================================================
 # TEST 3 - Normal ROE
 # ============================================================
+
 
 def test_return_on_equity_normal():
     result = return_on_equity(
@@ -50,6 +50,7 @@ def test_return_on_equity_normal():
 # TEST 4 - Negative Equity
 # ============================================================
 
+
 def test_return_on_equity_negative_equity():
     result = return_on_equity(
         net_profit=200,
@@ -64,6 +65,7 @@ def test_return_on_equity_negative_equity():
 # TEST 5 - Normal OPM
 # ============================================================
 
+
 def test_operating_profit_margin_normal():
     result = operating_profit_margin(
         operating_profit=250,
@@ -76,6 +78,7 @@ def test_operating_profit_margin_normal():
 # ============================================================
 # TEST 6 - OPM Cross-check Mismatch
 # ============================================================
+
 
 def test_opm_crosscheck_mismatch():
     calculated = operating_profit_margin(
@@ -96,6 +99,7 @@ def test_opm_crosscheck_mismatch():
 # TEST 7 - Normal ROCE
 # ============================================================
 
+
 def test_return_on_capital_employed_normal():
     result = return_on_capital_employed(
         operating_profit=200,
@@ -111,6 +115,7 @@ def test_return_on_capital_employed_normal():
 # ============================================================
 # TEST 8 - ROA Zero Assets
 # ============================================================
+
 
 def test_return_on_assets_zero_assets():
     result = return_on_assets(

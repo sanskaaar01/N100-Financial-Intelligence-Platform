@@ -1,9 +1,8 @@
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 
 DB_PATH = Path("db/nifty100.db")
 
@@ -44,10 +43,7 @@ def latest_rows(df):
 
         import re
 
-        match = re.search(
-            r"(19|20)\d{2}",
-            text
-        )
+        match = re.search(r"(19|20)\d{2}", text)
 
         if not match:
             return -1
@@ -80,20 +76,11 @@ def latest_rows(df):
 
         return year * 100 + month
 
-    result["_year_sort"] = result[
-        "year"
-    ].apply(year_value)
+    result["_year_sort"] = result["year"].apply(year_value)
 
     result = (
-        result
-        .sort_values(
-            ["company_id", "_year_sort"],
-            ascending=[True, False]
-        )
-        .drop_duplicates(
-            "company_id",
-            keep="first"
-        )
+        result.sort_values(["company_id", "_year_sort"], ascending=[True, False])
+        .drop_duplicates("company_id", keep="first")
         .drop(columns="_year_sort")
     )
 
@@ -106,18 +93,11 @@ def find_column(columns, candidates):
     source column names.
     """
 
-    normalized = {
-        str(column).lower().replace(" ", "_"): column
-        for column in columns
-    }
+    normalized = {str(column).lower().replace(" ", "_"): column for column in columns}
 
     for candidate in candidates:
 
-        key = (
-            candidate
-            .lower()
-            .replace(" ", "_")
-        )
+        key = candidate.lower().replace(" ", "_")
 
         if key in normalized:
             return normalized[key]
@@ -135,15 +115,9 @@ def calculate_roce(conn):
     consistent with the Sprint 2 ratio engine.
     """
 
-    pnl = pd.read_sql_query(
-        "SELECT * FROM profitandloss",
-        conn
-    )
+    pnl = pd.read_sql_query("SELECT * FROM profitandloss", conn)
 
-    bs = pd.read_sql_query(
-        "SELECT * FROM balancesheet",
-        conn
-    )
+    bs = pd.read_sql_query("SELECT * FROM balancesheet", conn)
 
     if pnl.empty or bs.empty:
         return pd.DataFrame(
@@ -159,7 +133,7 @@ def calculate_roce(conn):
         [
             "operating_profit",
             "op_profit",
-        ]
+        ],
     )
 
     other_income_col = find_column(
@@ -167,7 +141,7 @@ def calculate_roce(conn):
         [
             "other_income",
             "otherincome",
-        ]
+        ],
     )
 
     equity_col = find_column(
@@ -176,7 +150,7 @@ def calculate_roce(conn):
             "equity_capital",
             "equity",
             "shareholders_equity",
-        ]
+        ],
     )
 
     reserves_col = find_column(
@@ -185,7 +159,7 @@ def calculate_roce(conn):
             "reserves",
             "reserves_surplus",
             "reserve_surplus",
-        ]
+        ],
     )
 
     borrowings_col = find_column(
@@ -195,7 +169,7 @@ def calculate_roce(conn):
             "total_borrowings",
             "debt",
             "total_debt",
-        ]
+        ],
     )
 
     if operating_profit_col is None:
@@ -217,16 +191,10 @@ def calculate_roce(conn):
         if column is None:
             continue
 
-    pnl["operating_profit"] = pd.to_numeric(
-        pnl[operating_profit_col],
-        errors="coerce"
-    )
+    pnl["operating_profit"] = pd.to_numeric(pnl[operating_profit_col], errors="coerce")
 
     if other_income_col:
-        pnl["other_income"] = pd.to_numeric(
-            pnl[other_income_col],
-            errors="coerce"
-        )
+        pnl["other_income"] = pd.to_numeric(pnl[other_income_col], errors="coerce")
     else:
         pnl["other_income"] = 0.0
 
@@ -238,26 +206,17 @@ def calculate_roce(conn):
     ].copy()
 
     if equity_col:
-        bs_temp["equity_capital"] = pd.to_numeric(
-            bs[equity_col],
-            errors="coerce"
-        )
+        bs_temp["equity_capital"] = pd.to_numeric(bs[equity_col], errors="coerce")
     else:
         bs_temp["equity_capital"] = 0.0
 
     if reserves_col:
-        bs_temp["reserves"] = pd.to_numeric(
-            bs[reserves_col],
-            errors="coerce"
-        )
+        bs_temp["reserves"] = pd.to_numeric(bs[reserves_col], errors="coerce")
     else:
         bs_temp["reserves"] = 0.0
 
     if borrowings_col:
-        bs_temp["borrowings"] = pd.to_numeric(
-            bs[borrowings_col],
-            errors="coerce"
-        )
+        bs_temp["borrowings"] = pd.to_numeric(bs[borrowings_col], errors="coerce")
     else:
         bs_temp["borrowings"] = 0.0
 
@@ -276,27 +235,19 @@ def calculate_roce(conn):
             "company_id",
             "year",
         ],
-        how="inner"
+        how="inner",
     )
 
     merged["capital_employed"] = (
-        merged["equity_capital"]
-        + merged["reserves"]
-        + merged["borrowings"]
+        merged["equity_capital"] + merged["reserves"] + merged["borrowings"]
     )
 
-    merged["ebit"] = (
-        merged["operating_profit"]
-        + merged["other_income"]
-    )
+    merged["ebit"] = merged["operating_profit"] + merged["other_income"]
 
     merged["return_on_capital_employed_pct"] = np.where(
         merged["capital_employed"] > 0,
-        (
-            merged["ebit"]
-            / merged["capital_employed"]
-        ) * 100,
-        np.nan
+        (merged["ebit"] / merged["capital_employed"]) * 100,
+        np.nan,
     )
 
     return merged[
@@ -329,7 +280,7 @@ def load_peer_data():
                 eps_cagr_5yr
             FROM financial_ratios
             """,
-            conn
+            conn,
         )
 
         peer_groups = pd.read_sql_query(
@@ -340,23 +291,17 @@ def load_peer_data():
                 is_benchmark
             FROM peer_groups
             """,
-            conn
+            conn,
         )
 
-        roce = calculate_roce(
-            conn
-        )
+        roce = calculate_roce(conn)
 
     finally:
         conn.close()
 
-    ratios = latest_rows(
-        ratios
-    )
+    ratios = latest_rows(ratios)
 
-    roce = latest_rows(
-        roce
-    )
+    roce = latest_rows(roce)
 
     ratios = ratios.merge(
         roce[
@@ -366,7 +311,7 @@ def load_peer_data():
             ]
         ],
         on="company_id",
-        how="left"
+        how="left",
     )
 
     return ratios, peer_groups
@@ -381,16 +326,9 @@ def percent_rank(series):
     Ties receive the same rank.
     """
 
-    values = pd.to_numeric(
-        series,
-        errors="coerce"
-    )
+    values = pd.to_numeric(series, errors="coerce")
 
-    result = pd.Series(
-        np.nan,
-        index=series.index,
-        dtype=float
-    )
+    result = pd.Series(np.nan, index=series.index, dtype=float)
 
     valid = values.notna()
 
@@ -401,17 +339,11 @@ def percent_rank(series):
         result.loc[valid] = 1.0
         return result
 
-    ranks = values.loc[valid].rank(
-        method="min",
-        ascending=True
-    )
+    ranks = values.loc[valid].rank(method="min", ascending=True)
 
     n = valid.sum()
 
-    result.loc[valid] = (
-        (ranks - 1)
-        / (n - 1)
-    )
+    result.loc[valid] = (ranks - 1) / (n - 1)
 
     return result
 
@@ -420,20 +352,12 @@ def calculate_peer_percentiles():
     ratios, peer_groups = load_peer_data()
 
     if ratios.empty:
-        raise RuntimeError(
-            "No financial ratio data found."
-        )
+        raise RuntimeError("No financial ratio data found.")
 
     if peer_groups.empty:
-        raise RuntimeError(
-            "No peer group assignments found."
-        )
+        raise RuntimeError("No peer group assignments found.")
 
-    merged = peer_groups.merge(
-        ratios,
-        on="company_id",
-        how="left"
-    )
+    merged = peer_groups.merge(ratios, on="company_id", how="left")
 
     output = []
 
@@ -490,24 +414,11 @@ def calculate_peer_percentiles():
         ),
     ]
 
-    for (
-        peer_group_name,
-        group
-    ) in merged.groupby(
-        "peer_group_name",
-        dropna=False
-    ):
+    for peer_group_name, group in merged.groupby("peer_group_name", dropna=False):
 
-        for (
-            metric_name,
-            source_column,
-            inverse
-        ) in metric_definitions:
+        for metric_name, source_column, inverse in metric_definitions:
 
-            values = pd.to_numeric(
-                group[source_column],
-                errors="coerce"
-            )
+            values = pd.to_numeric(group[source_column], errors="coerce")
 
             # Debt-free companies:
             # D/E = 0, therefore they receive the highest
@@ -515,9 +426,7 @@ def calculate_peer_percentiles():
             if source_column == "debt_to_equity":
                 values = values.fillna(0)
 
-            ranks = percent_rank(
-                values
-            )
+            ranks = percent_rank(values)
 
             if inverse:
                 ranks = 1 - ranks
@@ -529,39 +438,18 @@ def calculate_peer_percentiles():
 
                 output.append(
                     {
-                        "company_id":
-                            group.loc[
-                                index,
-                                "company_id"
-                            ],
-
-                        "peer_group_name":
-                            peer_group_name,
-
-                        "metric":
-                            metric_name,
-
-                        "value":
-                            None
-                            if pd.isna(value)
-                            else float(value),
-
-                        "percentile_rank":
-                            None
-                            if pd.isna(percentile)
-                            else float(percentile),
-
-                        "year":
-                            group.loc[
-                                index,
-                                "year"
-                            ],
+                        "company_id": group.loc[index, "company_id"],
+                        "peer_group_name": peer_group_name,
+                        "metric": metric_name,
+                        "value": None if pd.isna(value) else float(value),
+                        "percentile_rank": (
+                            None if pd.isna(percentile) else float(percentile)
+                        ),
+                        "year": group.loc[index, "year"],
                     }
                 )
 
-    result = pd.DataFrame(
-        output
-    )
+    result = pd.DataFrame(output)
 
     return result
 
@@ -571,12 +459,7 @@ def save_peer_percentiles(df):
 
     try:
 
-        df.to_sql(
-            "peer_percentiles",
-            conn,
-            if_exists="replace",
-            index=False
-        )
+        df.to_sql("peer_percentiles", conn, if_exists="replace", index=False)
 
         conn.commit()
 
@@ -603,70 +486,44 @@ def run_peer_engine():
             GROUP BY peer_group_name
             ORDER BY peer_group_name
             """,
-            conn
+            conn,
         )
     finally:
         conn.close()
 
     print()
-    print(
-        "Peer groups:",
-        len(peer_groups)
-    )
+    print("Peer groups:", len(peer_groups))
 
     print()
     print(peer_groups.to_string(index=False))
 
     result = calculate_peer_percentiles()
 
-    save_peer_percentiles(
-        result
-    )
+    save_peer_percentiles(result)
 
     print()
-    print(
-        "Percentile rows:",
-        len(result)
-    )
+    print("Percentile rows:", len(result))
 
-    print(
-        "Companies covered:",
-        result["company_id"].nunique()
-    )
+    print("Companies covered:", result["company_id"].nunique())
 
-    print(
-        "Peer groups covered:",
-        result["peer_group_name"].nunique()
-    )
+    print("Peer groups covered:", result["peer_group_name"].nunique())
 
-    print(
-        "Metrics covered:",
-        result["metric"].nunique()
-    )
+    print("Metrics covered:", result["metric"].nunique())
 
     conn = get_connection()
 
     try:
 
-        count = conn.execute(
-            "SELECT COUNT(*) FROM peer_percentiles"
-        ).fetchone()[0]
+        count = conn.execute("SELECT COUNT(*) FROM peer_percentiles").fetchone()[0]
 
     finally:
         conn.close()
 
-    print(
-        "SQLite rows:",
-        count
-    )
+    print("SQLite rows:", count)
 
     print()
     print("Sample:")
-    print(
-        result.head(10).to_string(
-            index=False
-        )
-    )
+    print(result.head(10).to_string(index=False))
 
     print()
     print("✅ DAY 18 PEER ENGINE COMPLETE")

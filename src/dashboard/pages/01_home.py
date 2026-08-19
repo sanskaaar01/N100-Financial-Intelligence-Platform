@@ -1,14 +1,13 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
+import streamlit as st
 
 from src.dashboard.utils.db import (
+    _read_query,
+    get_available_years,
     get_companies,
     get_latest_ratios,
-    get_available_years,
-    _read_query,
 )
-
 
 st.title("🏠 Nifty 100 Analytics")
 st.caption("Financial Intelligence Platform — Market Overview")
@@ -43,9 +42,7 @@ if years:
         index=len(years) - 1,
     )
 
-    selected = ratios[
-        ratios["year"].astype(str) == str(selected_year)
-    ].copy()
+    selected = ratios[ratios["year"].astype(str) == str(selected_year)].copy()
 
     if selected.empty:
         selected = ratios.copy()
@@ -69,11 +66,7 @@ company_columns = [
     if c in companies.columns
 ]
 
-company_info = companies[
-    company_columns
-].drop_duplicates(
-    subset=["company_id"]
-)
+company_info = companies[company_columns].drop_duplicates(subset=["company_id"])
 
 df = selected.merge(
     company_info,
@@ -85,6 +78,7 @@ df = selected.merge(
 # ============================================================
 # HELPERS
 # ============================================================
+
 
 def numeric_series(column):
     if column not in df.columns:
@@ -126,16 +120,14 @@ def fmt(value, suffix=""):
 # ============================================================
 
 try:
-    market = _read_query(
-        """
+    market = _read_query("""
         SELECT
             company_id,
             pe_ratio,
             pb_ratio,
             dividend_yield_pct
         FROM market_cap
-        """
-    )
+        """)
 except Exception:
     market = pd.DataFrame()
 
@@ -156,17 +148,11 @@ if not market.empty and "pe_ratio" in market.columns:
 # SUMMARY METRICS
 # ============================================================
 
-average_roe = mean(
-    "return_on_equity_pct"
-)
+average_roe = mean("return_on_equity_pct")
 
-median_de = median(
-    "debt_to_equity"
-)
+median_de = median("debt_to_equity")
 
-median_revenue_cagr = median(
-    "revenue_cagr_5yr"
-)
+median_revenue_cagr = median("revenue_cagr_5yr")
 
 total_companies = df["company_id"].nunique()
 
@@ -178,18 +164,14 @@ if "debt_to_equity" in df.columns:
         errors="coerce",
     )
 
-    debt_free_count = int(
-        (de_values == 0).sum()
-    )
+    debt_free_count = int((de_values == 0).sum())
 
 
 # ============================================================
 # KPI CARDS
 # ============================================================
 
-st.subheader(
-    f"Market Overview — {selected_year}"
-)
+st.subheader(f"Market Overview — {selected_year}")
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 
@@ -247,9 +229,7 @@ with left:
     if "broad_sector" in df.columns:
 
         sector_data = (
-            df.dropna(
-                subset=["broad_sector"]
-            )
+            df.dropna(subset=["broad_sector"])
             .groupby("broad_sector")["company_id"]
             .nunique()
             .reset_index(name="companies")
@@ -308,16 +288,12 @@ with right:
         )
 
         top = (
-            top.dropna(
-                subset=["composite_quality_score"]
-            )
+            top.dropna(subset=["composite_quality_score"])
             .sort_values(
                 "composite_quality_score",
                 ascending=False,
             )
-            .drop_duplicates(
-                subset=["company_id"]
-            )
+            .drop_duplicates(subset=["company_id"])
             .head(5)
         )
 
@@ -335,9 +311,7 @@ with right:
         display = top[columns].copy()
 
         if "composite_quality_score" in display.columns:
-            display[
-                "composite_quality_score"
-            ] = display[
+            display["composite_quality_score"] = display[
                 "composite_quality_score"
             ].round(2)
 
@@ -348,13 +322,9 @@ with right:
         )
 
     else:
-        st.info(
-            "Composite quality score unavailable."
-        )
+        st.info("Composite quality score unavailable.")
 
 
 st.divider()
 
-st.caption(
-    "Nifty 100 Financial Intelligence Platform"
-)
+st.caption("Nifty 100 Financial Intelligence Platform")

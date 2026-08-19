@@ -1,6 +1,5 @@
-import streamlit as st
-import pandas as pd
 import plotly.express as px
+import streamlit as st
 
 from src.dashboard.utils.db import get_companies, get_ratios
 
@@ -13,17 +12,9 @@ if companies.empty:
     st.warning("Company data unavailable.")
     st.stop()
 
-company_ids = sorted(
-    companies["company_id"]
-    .dropna()
-    .astype(str)
-    .unique()
-)
+company_ids = sorted(companies["company_id"].dropna().astype(str).unique())
 
-ticker = st.selectbox(
-    "Select Company",
-    company_ids
-)
+ticker = st.selectbox("Select Company", company_ids)
 
 data = get_ratios(ticker)
 
@@ -50,9 +41,7 @@ metric_options = {
 }
 
 available = {
-    label: column
-    for label, column in metric_options.items()
-    if column in data.columns
+    label: column for label, column in metric_options.items() if column in data.columns
 }
 
 selected = st.multiselect(
@@ -66,18 +55,11 @@ if not selected:
     st.info("Select at least one metric.")
     st.stop()
 
-plot_data = data[
-    ["year"] + [available[x] for x in selected]
-].copy()
+plot_data = data[["year"] + [available[x] for x in selected]].copy()
 
-rename_map = {
-    available[label]: label
-    for label in selected
-}
+rename_map = {available[label]: label for label in selected}
 
-plot_data = plot_data.rename(
-    columns=rename_map
-)
+plot_data = plot_data.rename(columns=rename_map)
 
 plot_data = plot_data.sort_values("year")
 

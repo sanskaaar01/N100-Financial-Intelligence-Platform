@@ -1,10 +1,8 @@
-from pathlib import Path
-from typing import Optional
-
 import sqlite3
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
-
 
 # ============================================================
 # DATABASE CONFIG
@@ -18,11 +16,10 @@ DB_PATH = PROJECT_ROOT / "db" / "nifty100.db"
 # DATABASE CONNECTION
 # ============================================================
 
+
 def _get_connection():
     if not DB_PATH.exists():
-        raise FileNotFoundError(
-            f"Database not found: {DB_PATH}"
-        )
+        raise FileNotFoundError(f"Database not found: {DB_PATH}")
 
     return sqlite3.connect(str(DB_PATH))
 
@@ -30,6 +27,7 @@ def _get_connection():
 # ============================================================
 # GENERIC HELPERS
 # ============================================================
+
 
 def _read_query(
     query: str,
@@ -55,14 +53,9 @@ def _table_columns(
     conn = _get_connection()
 
     try:
-        rows = conn.execute(
-            f'PRAGMA table_info("{table_name}")'
-        ).fetchall()
+        rows = conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()
 
-        return [
-            row[1]
-            for row in rows
-        ]
+        return [row[1] for row in rows]
 
     finally:
         conn.close()
@@ -71,19 +64,14 @@ def _table_columns(
 def _first_existing(
     columns: list[str],
     candidates: list[str],
-) -> Optional[str]:
+) -> str | None:
 
-    lower_map = {
-        column.lower(): column
-        for column in columns
-    }
+    lower_map = {column.lower(): column for column in columns}
 
     for candidate in candidates:
 
         if candidate.lower() in lower_map:
-            return lower_map[
-                candidate.lower()
-            ]
+            return lower_map[candidate.lower()]
 
     return None
 
@@ -97,21 +85,18 @@ def _empty_dataframe():
 # COMPANIES
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_companies() -> pd.DataFrame:
 
     try:
 
-        columns = _table_columns(
-            "companies"
-        )
+        columns = _table_columns("companies")
 
         if not columns:
             return _empty_dataframe()
 
-        df = _read_query(
-            "SELECT * FROM companies"
-        )
+        df = _read_query("SELECT * FROM companies")
 
         if df.empty:
             return df
@@ -134,19 +119,11 @@ def get_companies() -> pd.DataFrame:
 
         if id_column:
 
-            df["company_id"] = (
-                df[id_column]
-                .astype(str)
-                .str.strip()
-            )
+            df["company_id"] = df[id_column].astype(str).str.strip()
 
         elif "id" in df.columns:
 
-            df["company_id"] = (
-                df["id"]
-                .astype(str)
-                .str.strip()
-            )
+            df["company_id"] = df["id"].astype(str).str.strip()
 
         # ----------------------------------------------------
         # COMPANY NAME
@@ -163,16 +140,11 @@ def get_companies() -> pd.DataFrame:
 
         if name_column:
 
-            df["company_name"] = (
-                df[name_column]
-                .astype(str)
-            )
+            df["company_name"] = df[name_column].astype(str)
 
         else:
 
-            df["company_name"] = (
-                df["company_id"]
-            )
+            df["company_name"] = df["company_id"]
 
         # ----------------------------------------------------
         # SECTOR DIRECTLY IN COMPANIES
@@ -188,10 +160,7 @@ def get_companies() -> pd.DataFrame:
 
         if sector_column:
 
-            df["broad_sector"] = (
-                df[sector_column]
-                .astype(str)
-            )
+            df["broad_sector"] = df[sector_column].astype(str)
 
         # ----------------------------------------------------
         # SUB-SECTOR
@@ -208,10 +177,7 @@ def get_companies() -> pd.DataFrame:
 
         if sub_sector_column:
 
-            df["sub_sector"] = (
-                df[sub_sector_column]
-                .astype(str)
-            )
+            df["sub_sector"] = df[sub_sector_column].astype(str)
 
         # ----------------------------------------------------
         # JOIN SECTORS TABLE IF NEEDED
@@ -230,62 +196,43 @@ def get_companies() -> pd.DataFrame:
 
             try:
 
-                sector_columns = _table_columns(
-                    "sectors"
-                )
+                sector_columns = _table_columns("sectors")
 
                 if sector_columns:
 
-                    sectors = _read_query(
-                        "SELECT * FROM sectors"
-                    )
+                    sectors = _read_query("SELECT * FROM sectors")
 
                     if not sectors.empty:
 
-                        sector_id_column = (
-                            _first_existing(
-                                list(
-                                    sectors.columns
-                                ),
-                                [
-                                    "company_id",
-                                    "nse_ticker",
-                                    "ticker",
-                                    "symbol",
-                                ],
-                            )
+                        sector_id_column = _first_existing(
+                            list(sectors.columns),
+                            [
+                                "company_id",
+                                "nse_ticker",
+                                "ticker",
+                                "symbol",
+                            ],
                         )
 
-                        sector_name_column = (
-                            _first_existing(
-                                list(
-                                    sectors.columns
-                                ),
-                                [
-                                    "broad_sector",
-                                    "sector",
-                                    "sector_name",
-                                ],
-                            )
+                        sector_name_column = _first_existing(
+                            list(sectors.columns),
+                            [
+                                "broad_sector",
+                                "sector",
+                                "sector_name",
+                            ],
                         )
 
-                        sub_sector_name_column = (
-                            _first_existing(
-                                list(
-                                    sectors.columns
-                                ),
-                                [
-                                    "sub_sector",
-                                    "subsector",
-                                    "industry",
-                                ],
-                            )
+                        sub_sector_name_column = _first_existing(
+                            list(sectors.columns),
+                            [
+                                "sub_sector",
+                                "subsector",
+                                "industry",
+                            ],
                         )
 
-                        if (
-                            sector_id_column
-                            and sector_name_column
-                        ):
+                        if sector_id_column and sector_name_column:
 
                             sector_lookup = (
                                 sectors[
@@ -294,11 +241,7 @@ def get_companies() -> pd.DataFrame:
                                         sector_name_column,
                                     ]
                                 ]
-                                .drop_duplicates(
-                                    subset=[
-                                        sector_id_column
-                                    ]
-                                )
+                                .drop_duplicates(subset=[sector_id_column])
                                 .copy()
                             )
 
@@ -307,14 +250,8 @@ def get_companies() -> pd.DataFrame:
                                 "broad_sector",
                             ]
 
-                            sector_lookup[
-                                "company_id"
-                            ] = (
-                                sector_lookup[
-                                    "company_id"
-                                ]
-                                .astype(str)
-                                .str.strip()
+                            sector_lookup["company_id"] = (
+                                sector_lookup["company_id"].astype(str).str.strip()
                             )
 
                             df = df.merge(
@@ -327,22 +264,12 @@ def get_companies() -> pd.DataFrame:
                                 ),
                             )
 
-                            if (
-                                "broad_sector_sector"
-                                in df.columns
-                            ):
+                            if "broad_sector_sector" in df.columns:
 
-                                if (
-                                    "broad_sector"
-                                    in df.columns
-                                ):
+                                if "broad_sector" in df.columns:
 
-                                    df[
-                                        "broad_sector"
-                                    ] = (
-                                        df[
-                                            "broad_sector"
-                                        ]
+                                    df["broad_sector"] = (
+                                        df["broad_sector"]
                                         .replace(
                                             [
                                                 "",
@@ -352,31 +279,19 @@ def get_companies() -> pd.DataFrame:
                                             ],
                                             pd.NA,
                                         )
-                                        .fillna(
-                                            df[
-                                                "broad_sector_sector"
-                                            ]
-                                        )
+                                        .fillna(df["broad_sector_sector"])
                                     )
 
                                 else:
 
-                                    df[
-                                        "broad_sector"
-                                    ] = df[
-                                        "broad_sector_sector"
-                                    ]
+                                    df["broad_sector"] = df["broad_sector_sector"]
 
                                 df = df.drop(
-                                    columns=[
-                                        "broad_sector_sector"
-                                    ],
+                                    columns=["broad_sector_sector"],
                                     errors="ignore",
                                 )
 
-                            if (
-                                sub_sector_name_column
-                            ):
+                            if sub_sector_name_column:
 
                                 sub_lookup = (
                                     sectors[
@@ -385,11 +300,7 @@ def get_companies() -> pd.DataFrame:
                                             sub_sector_name_column,
                                         ]
                                     ]
-                                    .drop_duplicates(
-                                        subset=[
-                                            sector_id_column
-                                        ]
-                                    )
+                                    .drop_duplicates(subset=[sector_id_column])
                                     .copy()
                                 )
 
@@ -398,14 +309,8 @@ def get_companies() -> pd.DataFrame:
                                     "sub_sector_from_sector",
                                 ]
 
-                                sub_lookup[
-                                    "company_id"
-                                ] = (
-                                    sub_lookup[
-                                        "company_id"
-                                    ]
-                                    .astype(str)
-                                    .str.strip()
+                                sub_lookup["company_id"] = (
+                                    sub_lookup["company_id"].astype(str).str.strip()
                                 )
 
                                 df = df.merge(
@@ -414,25 +319,14 @@ def get_companies() -> pd.DataFrame:
                                     how="left",
                                 )
 
-                                if (
-                                    "sub_sector"
-                                    not in df.columns
-                                ):
+                                if "sub_sector" not in df.columns:
 
-                                    df[
-                                        "sub_sector"
-                                    ] = df[
-                                        "sub_sector_from_sector"
-                                    ]
+                                    df["sub_sector"] = df["sub_sector_from_sector"]
 
                                 else:
 
-                                    df[
-                                        "sub_sector"
-                                    ] = (
-                                        df[
-                                            "sub_sector"
-                                        ]
+                                    df["sub_sector"] = (
+                                        df["sub_sector"]
                                         .replace(
                                             [
                                                 "",
@@ -442,17 +336,11 @@ def get_companies() -> pd.DataFrame:
                                             ],
                                             pd.NA,
                                         )
-                                        .fillna(
-                                            df[
-                                                "sub_sector_from_sector"
-                                            ]
-                                        )
+                                        .fillna(df["sub_sector_from_sector"])
                                     )
 
                                 df = df.drop(
-                                    columns=[
-                                        "sub_sector_from_sector"
-                                    ],
+                                    columns=["sub_sector_from_sector"],
                                     errors="ignore",
                                 )
 
@@ -465,19 +353,11 @@ def get_companies() -> pd.DataFrame:
 
         if "company_id" in df.columns:
 
-            df["company_id"] = (
-                df["company_id"]
-                .astype(str)
-                .str.strip()
-            )
+            df["company_id"] = df["company_id"].astype(str).str.strip()
 
         if "company_name" in df.columns:
 
-            df["company_name"] = (
-                df["company_name"]
-                .astype(str)
-                .str.strip()
-            )
+            df["company_name"] = df["company_name"].astype(str).str.strip()
 
         if "broad_sector" not in df.columns:
 
@@ -491,9 +371,7 @@ def get_companies() -> pd.DataFrame:
 
     except Exception as exc:
 
-        st.error(
-            f"Unable to load company data: {exc}"
-        )
+        st.error(f"Unable to load company data: {exc}")
 
         return _empty_dataframe()
 
@@ -502,10 +380,11 @@ def get_companies() -> pd.DataFrame:
 # FINANCIAL RATIOS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_ratios(
     ticker: str,
-    year: Optional[str] = None,
+    year: str | None = None,
 ) -> pd.DataFrame:
 
     if not ticker:
@@ -519,9 +398,7 @@ def get_ratios(
             WHERE company_id = ?
         """
 
-        params = [
-            str(ticker)
-        ]
+        params = [str(ticker)]
 
         if year is not None:
 
@@ -529,9 +406,7 @@ def get_ratios(
                 AND year = ?
             """
 
-            params.append(
-                str(year)
-            )
+            params.append(str(year))
 
         query += """
             ORDER BY
@@ -555,6 +430,7 @@ def get_ratios(
 # ============================================================
 # PROFIT & LOSS
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def get_pl(
@@ -590,6 +466,7 @@ def get_pl(
 # BALANCE SHEET
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_bs(
     ticker: str,
@@ -623,6 +500,7 @@ def get_bs(
 # ============================================================
 # CASH FLOW
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def get_cf(
@@ -658,6 +536,7 @@ def get_cf(
 # SECTORS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_sectors() -> pd.DataFrame:
 
@@ -684,9 +563,7 @@ def get_sectors() -> pd.DataFrame:
 
         return (
             companies[columns]
-            .drop_duplicates(
-                subset=["company_id"]
-            )
+            .drop_duplicates(subset=["company_id"])
             .sort_values(
                 [
                     "broad_sector",
@@ -706,9 +583,10 @@ def get_sectors() -> pd.DataFrame:
 # PEER GROUPS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_peers(
-    group_name: Optional[str] = None,
+    group_name: str | None = None,
 ) -> pd.DataFrame:
 
     try:
@@ -725,15 +603,13 @@ def get_peers(
                 [str(group_name)],
             )
 
-        return _read_query(
-            """
+        return _read_query("""
             SELECT *
             FROM peer_groups
             ORDER BY
                 peer_group_name,
                 company_id
-            """
-        )
+            """)
 
     except Exception:
 
@@ -744,54 +620,40 @@ def get_peers(
 # VALUATION
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_valuation(
-    ticker: Optional[str] = None,
+    ticker: str | None = None,
 ) -> pd.DataFrame:
 
-    valuation_path = (
-        PROJECT_ROOT
-        / "output"
-        / "valuation_summary.xlsx"
-    )
+    valuation_path = PROJECT_ROOT / "output" / "valuation_summary.xlsx"
 
     if not valuation_path.exists():
         return _empty_dataframe()
 
     try:
 
-        df = pd.read_excel(
-            valuation_path
-        )
+        df = pd.read_excel(valuation_path)
 
     except Exception:
 
         return _empty_dataframe()
 
-    if (
-        ticker
-        and "company_id" in df.columns
-    ):
+    if ticker and "company_id" in df.columns:
 
-        df = df[
-            df["company_id"]
-            .astype(str)
-            .str.strip()
-            == str(ticker).strip()
-        ]
+        df = df[df["company_id"].astype(str).str.strip() == str(ticker).strip()]
 
-    return df.reset_index(
-        drop=True
-    )
+    return df.reset_index(drop=True)
 
 
 # ============================================================
 # LATEST / AS-OF-YEAR RATIOS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_latest_ratios(
-    selected_year: Optional[str] = None,
+    selected_year: str | None = None,
 ) -> pd.DataFrame:
 
     try:
@@ -844,9 +706,7 @@ def get_latest_ratios(
                 ORDER BY fr.company_id
             """
 
-            return _read_query(
-                query
-            )
+            return _read_query(query)
 
         # ----------------------------------------------------
         # Selected year:
@@ -857,22 +717,15 @@ def get_latest_ratios(
         # companies that reported specifically in Sep 2024.
         # ----------------------------------------------------
 
-        selected_year_text = str(
-            selected_year
-        ).strip()
+        selected_year_text = str(selected_year).strip()
 
         digits = "".join(
-            character
-            for character
-            in selected_year_text
-            if character.isdigit()
+            character for character in selected_year_text if character.isdigit()
         )
 
         if len(digits) >= 4:
 
-            target_year = int(
-                digits[-4:]
-            )
+            target_year = int(digits[-4:])
 
         else:
 
@@ -933,9 +786,7 @@ def get_latest_ratios(
 
     except Exception as exc:
 
-        st.error(
-            f"Unable to load latest ratio data: {exc}"
-        )
+        st.error(f"Unable to load latest ratio data: {exc}")
 
         return _empty_dataframe()
 
@@ -944,43 +795,28 @@ def get_latest_ratios(
 # AVAILABLE REPORTING YEARS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_available_years() -> list[str]:
 
     try:
 
-        df = _read_query(
-            """
+        df = _read_query("""
             SELECT DISTINCT year
             FROM financial_ratios
             WHERE year IS NOT NULL
-            """
-        )
+            """)
 
         if df.empty:
             return []
 
-        values = (
-            df["year"]
-            .astype(str)
-            .str.strip()
-            .drop_duplicates()
-            .tolist()
-        )
+        values = df["year"].astype(str).str.strip().drop_duplicates().tolist()
 
         def sort_key(value):
 
-            digits = "".join(
-                character
-                for character in value
-                if character.isdigit()
-            )
+            digits = "".join(character for character in value if character.isdigit())
 
-            year_number = (
-                int(digits[-4:])
-                if len(digits) >= 4
-                else 0
-            )
+            year_number = int(digits[-4:]) if len(digits) >= 4 else 0
 
             month_order = {
                 "Mar": 3,
@@ -993,9 +829,7 @@ def get_available_years() -> list[str]:
 
             month_number = 0
 
-            for month, number in (
-                month_order.items()
-            ):
+            for month, number in month_order.items():
 
                 if value.startswith(month):
                     month_number = number
@@ -1007,9 +841,7 @@ def get_available_years() -> list[str]:
                 value,
             )
 
-        values.sort(
-            key=sort_key
-        )
+        values.sort(key=sort_key)
 
         return values
 

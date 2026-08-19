@@ -1,5 +1,6 @@
 ﻿import sqlite3
 from pathlib import Path
+
 import pandas as pd
 
 from src.reports.tearsheet import generate_tearsheet
@@ -80,10 +81,7 @@ def main():
         company_id = str(row["company_id"])
         company_name = str(row["company_name"])
 
-        print(
-            f"[{index + 1:02d}/{len(companies)}] "
-            f"{company_id} - {company_name}"
-        )
+        print(f"[{index + 1:02d}/{len(companies)}] " f"{company_id} - {company_name}")
 
         try:
 
@@ -91,9 +89,7 @@ def main():
 
             if not enough:
 
-                print(
-                    "  SKIPPED - fewer than 3 years of common data"
-                )
+                print("  SKIPPED - fewer than 3 years of common data")
 
                 skipped.append(
                     {
@@ -113,10 +109,7 @@ def main():
             if not output_path.exists():
 
                 # Existing function may not return a path.
-                output_path = (
-                    OUTPUT_DIR
-                    / f"{company_id}_tearsheet.pdf"
-                )
+                output_path = OUTPUT_DIR / f"{company_id}_tearsheet.pdf"
 
             if output_path.exists():
 
@@ -131,9 +124,7 @@ def main():
                     }
                 )
 
-                print(
-                    f"  PASS - {size:,} bytes"
-                )
+                print(f"  PASS - {size:,} bytes")
 
             else:
 
@@ -145,9 +136,7 @@ def main():
                     }
                 )
 
-                print(
-                    "  FAIL - PDF not found"
-                )
+                print("  FAIL - PDF not found")
 
         except Exception as exc:
 
@@ -159,9 +148,7 @@ def main():
                 }
             )
 
-            print(
-                f"  FAIL - {type(exc).__name__}: {exc}"
-            )
+            print(f"  FAIL - {type(exc).__name__}: {exc}")
 
     pd.DataFrame(skipped).to_csv(
         SKIPPED_PATH,
@@ -180,10 +167,7 @@ def main():
     print()
 
     if generated:
-        sizes = [
-            x["size_bytes"]
-            for x in generated
-        ]
+        sizes = [x["size_bytes"] for x in generated]
 
         print(
             "Smallest PDF:",
@@ -215,9 +199,7 @@ def main():
 
     # Do not silently claim success if companies failed.
     if failed:
-        raise RuntimeError(
-            f"{len(failed)} company tearsheet(s) failed."
-        )
+        raise RuntimeError(f"{len(failed)} company tearsheet(s) failed.")
 
 
 if __name__ == "__main__":

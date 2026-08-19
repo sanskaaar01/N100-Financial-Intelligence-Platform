@@ -1,9 +1,10 @@
 import sqlite3
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.dashboard.utils.db import DB_PATH, get_peers, get_companies
+from src.dashboard.utils.db import DB_PATH
 
 st.title("Peer Comparison")
 st.caption("Compare companies against their assigned peer groups.")
@@ -11,6 +12,7 @@ st.caption("Compare companies against their assigned peer groups.")
 # ============================================================
 # DATABASE HELPER
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def load_peer_percentiles():
@@ -66,13 +68,7 @@ if peer_data.empty:
 # PEER GROUP SELECTION
 # ============================================================
 
-groups = sorted(
-    peer_data["peer_group_name"]
-    .dropna()
-    .astype(str)
-    .unique()
-    .tolist()
-)
+groups = sorted(peer_data["peer_group_name"].dropna().astype(str).unique().tolist())
 
 if not groups:
     st.warning("No peer groups available.")
@@ -83,21 +79,13 @@ selected_group = st.selectbox(
     groups,
 )
 
-group_data = peer_data[
-    peer_data["peer_group_name"] == selected_group
-].copy()
+group_data = peer_data[peer_data["peer_group_name"] == selected_group].copy()
 
 if group_data.empty:
     st.info("No companies available for this peer group.")
     st.stop()
 
-companies = sorted(
-    group_data["company_id"]
-    .dropna()
-    .astype(str)
-    .unique()
-    .tolist()
-)
+companies = sorted(group_data["company_id"].dropna().astype(str).unique().tolist())
 
 selected_company = st.selectbox(
     "Select Company",
@@ -108,9 +96,7 @@ selected_company = st.selectbox(
 # COMPANY / PEER METRICS
 # ============================================================
 
-company_data = group_data[
-    group_data["company_id"] == selected_company
-].copy()
+company_data = group_data[group_data["company_id"] == selected_company].copy()
 
 metric_order = [
     "ROE",
@@ -125,10 +111,7 @@ metric_order = [
     "Asset Turnover",
 ]
 
-available_metrics = [
-    m for m in metric_order
-    if m in company_data["metric"].unique()
-]
+available_metrics = [m for m in metric_order if m in company_data["metric"].unique()]
 
 # ============================================================
 # RADAR CHART
@@ -139,30 +122,19 @@ if available_metrics:
     peer_values = []
 
     for metric in available_metrics:
-        row = company_data[
-            company_data["metric"] == metric
-        ]
+        row = company_data[company_data["metric"] == metric]
 
         if row.empty:
             company_values.append(0)
         else:
-            company_values.append(
-                float(row.iloc[0]["percentile_rank"]) * 100
-            )
+            company_values.append(float(row.iloc[0]["percentile_rank"]) * 100)
 
-        peer_rows = group_data[
-            group_data["metric"] == metric
-        ]
+        peer_rows = group_data[group_data["metric"] == metric]
 
         if peer_rows.empty:
             peer_values.append(0)
         else:
-            peer_values.append(
-                float(
-                    peer_rows["percentile_rank"]
-                    .mean()
-                ) * 100
-            )
+            peer_values.append(float(peer_rows["percentile_rank"].mean()) * 100)
 
     theta = available_metrics
 
@@ -217,20 +189,11 @@ pivot = group_data.pivot_table(
 ).reset_index()
 
 if not pivot.empty:
-    ordered = [
-        "company_id"
-    ] + [
-        m for m in metric_order
-        if m in pivot.columns
-    ]
+    ordered = ["company_id"] + [m for m in metric_order if m in pivot.columns]
 
-    pivot = pivot[
-        [c for c in ordered if c in pivot.columns]
-    ]
+    pivot = pivot[[c for c in ordered if c in pivot.columns]]
 
-    numeric = pivot.select_dtypes(
-        include="number"
-    ).columns
+    numeric = pivot.select_dtypes(include="number").columns
 
     for col in numeric:
         pivot[col] = pivot[col].round(2)
@@ -258,9 +221,7 @@ if not percentile_table.empty:
 
     for col in percentile_table.columns:
         if col != "company_id":
-            percentile_table[col] = (
-                percentile_table[col] * 100
-            ).round(1)
+            percentile_table[col] = (percentile_table[col] * 100).round(1)
 
     st.dataframe(
         percentile_table,
@@ -268,4 +229,6 @@ if not percentile_table.empty:
         hide_index=True,
     )
 
-st.caption("Percentile values are displayed as 0–100. Higher percentile indicates stronger relative performance.")
+st.caption(
+    "Percentile values are displayed as 0–100. Higher percentile indicates stronger relative performance."
+)

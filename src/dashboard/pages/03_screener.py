@@ -1,8 +1,6 @@
 import streamlit as st
-import pandas as pd
-import io
 
-from src.screener.engine import run_screener, load_financial_data
+from src.screener.engine import load_financial_data, run_screener
 
 st.title("Screener")
 st.caption("Filter the Nifty 100 universe using financial and valuation metrics.")
@@ -88,10 +86,12 @@ if active_preset:
 
 st.sidebar.header("Screener Filters")
 
+
 def preset_value(key, default):
     if active_preset and key in PRESETS.get(active_preset, {}):
         return PRESETS[active_preset][key]
     return default
+
 
 roe_min = st.sidebar.number_input(
     "ROE minimum (%)",
@@ -245,10 +245,7 @@ preferred_columns = [
     "dividend_yield_pct",
 ]
 
-display_columns = [
-    c for c in preferred_columns
-    if c in results.columns
-]
+display_columns = [c for c in preferred_columns if c in results.columns]
 
 if display_columns:
     table = results[display_columns].copy()
@@ -284,4 +281,6 @@ st.download_button(
     use_container_width=True,
 )
 
-st.caption("Financials-sector companies are handled according to the screener engine's D/E rules.")
+st.caption(
+    "Financials-sector companies are handled according to the screener engine's D/E rules."
+)

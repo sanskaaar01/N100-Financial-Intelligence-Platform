@@ -5,8 +5,9 @@ Universal Excel Loader
 """
 
 from pathlib import Path
+
 import pandas as pd
-from ..etl.validator import DataValidator
+
 
 class ExcelLoader:
 
@@ -24,12 +25,7 @@ class ExcelLoader:
 
         df = pd.read_excel(filepath, header=header)
 
-        df.columns = (
-            df.columns
-            .str.strip()
-            .str.lower()
-            .str.replace(" ", "_")
-        )
+        df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
         print(f"Rows : {len(df)}")
         print(f"Columns : {len(df.columns)}")

@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .database import Database
 from ..etl.loader import ExcelLoader
+from .database import Database
 
 
 class DatabaseLoader:
@@ -31,18 +31,11 @@ class DatabaseLoader:
 
         self.root = Path(__file__).resolve().parents[2]
 
-        self.raw_folder = (
-            self.root / "data" / "raw"
-        )
+        self.raw_folder = self.root / "data" / "raw"
 
-        self.output_folder = (
-            self.root / "data" / "output"
-        )
+        self.output_folder = self.root / "data" / "output"
 
-        self.output_folder.mkdir(
-            parents=True,
-            exist_ok=True
-        )
+        self.output_folder.mkdir(parents=True, exist_ok=True)
 
         # ------------------------------------------------------
         # Database
@@ -70,15 +63,11 @@ class DatabaseLoader:
 
     def read_file(self, filename):
 
-        filepath = (
-            self.raw_folder / filename
-        )
+        filepath = self.raw_folder / filename
 
         if not filepath.exists():
 
-            raise FileNotFoundError(
-                f"File not found: {filepath}"
-            )
+            raise FileNotFoundError(f"File not found: {filepath}")
 
         # ------------------------------------------------------
         # IMPORTANT:
@@ -90,7 +79,6 @@ class DatabaseLoader:
         # ------------------------------------------------------
 
         header_rows = {
-
             # Header on Excel row 2
             "companies.xlsx": 1,
             "balancesheet.xlsx": 1,
@@ -99,7 +87,6 @@ class DatabaseLoader:
             "documents.xlsx": 1,
             "prosandcons.xlsx": 1,
             "analysis.xlsx": 1,
-
             # Header on Excel row 1
             "sectors.xlsx": 0,
             "peer_groups.xlsx": 0,
@@ -108,56 +95,33 @@ class DatabaseLoader:
             "financial_ratios.xlsx": 0,
         }
 
-        header_row = header_rows.get(
-            filename,
-            0
-        )
+        header_row = header_rows.get(filename, 0)
 
-        print(
-            f"Loading {filename}..."
-        )
+        print(f"Loading {filename}...")
 
-        df = pd.read_excel(
-            filepath,
-            header=header_row
-        )
+        df = pd.read_excel(filepath, header=header_row)
 
         # ------------------------------------------------------
         # Normalize column names
         # ------------------------------------------------------
 
         df.columns = (
-            df.columns
-            .astype(str)
+            df.columns.astype(str)
             .str.strip()
             .str.lower()
-            .str.replace(
-                " ",
-                "_",
-                regex=False
-            )
-            .str.replace(
-                "-",
-                "_",
-                regex=False
-            )
+            .str.replace(" ", "_", regex=False)
+            .str.replace("-", "_", regex=False)
         )
 
         # ------------------------------------------------------
         # Remove completely empty rows
         # ------------------------------------------------------
 
-        df = df.dropna(
-            how="all"
-        ).copy()
+        df = df.dropna(how="all").copy()
 
-        print(
-            f"Rows : {len(df)}"
-        )
+        print(f"Rows : {len(df)}")
 
-        print(
-            f"Columns : {len(df.columns)}"
-        )
+        print(f"Columns : {len(df.columns)}")
 
         return df
 
@@ -167,10 +131,7 @@ class DatabaseLoader:
 
     def get_table_columns(self, table_name):
 
-        result = pd.read_sql_query(
-            f"PRAGMA table_info({table_name})",
-            self.conn
-        )
+        result = pd.read_sql_query(f"PRAGMA table_info({table_name})", self.conn)
 
         if result.empty:
             return []
@@ -189,12 +150,7 @@ class DatabaseLoader:
 
         df = df.copy()
 
-        df["company_id"] = (
-            df["company_id"]
-            .astype(str)
-            .str.strip()
-            .str.upper()
-        )
+        df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
         return df
 
@@ -202,11 +158,7 @@ class DatabaseLoader:
     # INSERT DATAFRAME
     # ==========================================================
 
-    def insert_dataframe(
-        self,
-        table_name,
-        df
-    ):
+    def insert_dataframe(self, table_name, df):
 
         original_count = len(df)
 
@@ -214,26 +166,17 @@ class DatabaseLoader:
         # Normalize company IDs
         # ------------------------------------------------------
 
-        df = self.normalize_company_id(
-            df
-        )
+        df = self.normalize_company_id(df)
 
         # ------------------------------------------------------
         # Get actual SQLite columns
         # ------------------------------------------------------
 
-        table_columns = (
-            self.get_table_columns(
-                table_name
-            )
-        )
+        table_columns = self.get_table_columns(table_name)
 
         if not table_columns:
 
-            raise RuntimeError(
-                f"SQLite table '{table_name}' "
-                f"does not exist."
-            )
+            raise RuntimeError(f"SQLite table '{table_name}' " f"does not exist.")
 
         # ------------------------------------------------------
         # Remove columns that don't exist
@@ -241,28 +184,18 @@ class DatabaseLoader:
         # ------------------------------------------------------
 
         ignored_columns = [
-            column
-            for column in df.columns
-            if column not in table_columns
+            column for column in df.columns if column not in table_columns
         ]
 
         if ignored_columns:
 
             print(
-                f"⚠ Ignoring extra columns "
-                f"in {table_name}: "
-                f"{ignored_columns}"
+                f"⚠ Ignoring extra columns " f"in {table_name}: " f"{ignored_columns}"
             )
 
-        valid_columns = [
-            column
-            for column in df.columns
-            if column in table_columns
-        ]
+        valid_columns = [column for column in df.columns if column in table_columns]
 
-        df = df[
-            valid_columns
-        ].copy()
+        df = df[valid_columns].copy()
 
         # ------------------------------------------------------
         # Remove invalid company IDs
@@ -274,29 +207,17 @@ class DatabaseLoader:
 
         if "company_id" in df.columns:
 
-            company_df = pd.read_sql_query(
-                "SELECT id FROM companies",
-                self.conn
-            )
+            company_df = pd.read_sql_query("SELECT id FROM companies", self.conn)
 
             valid_company_ids = set(
-                company_df["id"]
-                .astype(str)
-                .str.strip()
-                .str.upper()
+                company_df["id"].astype(str).str.strip().str.upper()
             )
 
             before = len(df)
 
-            df = df[
-                df["company_id"].isin(
-                    valid_company_ids
-                )
-            ].copy()
+            df = df[df["company_id"].isin(valid_company_ids)].copy()
 
-            invalid_company_rows = (
-                before - len(df)
-            )
+            invalid_company_rows = before - len(df)
 
             if invalid_company_rows > 0:
 
@@ -325,25 +246,17 @@ class DatabaseLoader:
 
         if df.empty:
 
-            print(
-                f"⚠ No valid rows to insert "
-                f"into {table_name}"
+            print(f"⚠ No valid rows to insert " f"into {table_name}")
+
+            self.audit.append(
+                {
+                    "table": table_name,
+                    "source_rows": original_count,
+                    "rows_loaded": 0,
+                    "invalid_company_rows": invalid_company_rows,
+                    "status": "EMPTY",
+                }
             )
-
-            self.audit.append({
-
-                "table": table_name,
-
-                "source_rows": original_count,
-
-                "rows_loaded": 0,
-
-                "invalid_company_rows":
-                    invalid_company_rows,
-
-                "status": "EMPTY"
-
-            })
 
             return
 
@@ -351,35 +264,21 @@ class DatabaseLoader:
         # Insert
         # ------------------------------------------------------
 
-        df.to_sql(
-            table_name,
-            self.conn,
-            if_exists="append",
-            index=False
-        )
+        df.to_sql(table_name, self.conn, if_exists="append", index=False)
 
         loaded_count = len(df)
 
-        print(
-            f"✅ Inserted "
-            f"{loaded_count} rows into "
-            f"{table_name}"
+        print(f"✅ Inserted " f"{loaded_count} rows into " f"{table_name}")
+
+        self.audit.append(
+            {
+                "table": table_name,
+                "source_rows": original_count,
+                "rows_loaded": loaded_count,
+                "invalid_company_rows": invalid_company_rows,
+                "status": "SUCCESS",
+            }
         )
-
-        self.audit.append({
-
-            "table": table_name,
-
-            "source_rows": original_count,
-
-            "rows_loaded": loaded_count,
-
-            "invalid_company_rows":
-                invalid_company_rows,
-
-            "status": "SUCCESS"
-
-        })
 
     # ==========================================================
     # RUN
@@ -388,66 +287,18 @@ class DatabaseLoader:
     def run(self):
 
         files = [
-
-            (
-                "companies.xlsx",
-                "companies"
-            ),
-
-            (
-                "sectors.xlsx",
-                "sectors"
-            ),
-
-            (
-                "peer_groups.xlsx",
-                "peer_groups"
-            ),
-
-            (
-                "market_cap.xlsx",
-                "market_cap"
-            ),
-
-            (
-                "stock_prices.xlsx",
-                "stock_prices"
-            ),
-
-            (
-                "financial_ratios.xlsx",
-                "financial_ratios"
-            ),
-
-            (
-                "balancesheet.xlsx",
-                "balancesheet"
-            ),
-
-            (
-                "profitandloss.xlsx",
-                "profitandloss"
-            ),
-
-            (
-                "cashflow.xlsx",
-                "cashflow"
-            ),
-
-            (
-                "documents.xlsx",
-                "documents"
-            ),
-
-            (
-                "prosandcons.xlsx",
-                "prosandcons"
-            ),
-
-            (
-                "analysis.xlsx",
-                "analysis"
-            ),
+            ("companies.xlsx", "companies"),
+            ("sectors.xlsx", "sectors"),
+            ("peer_groups.xlsx", "peer_groups"),
+            ("market_cap.xlsx", "market_cap"),
+            ("stock_prices.xlsx", "stock_prices"),
+            ("financial_ratios.xlsx", "financial_ratios"),
+            ("balancesheet.xlsx", "balancesheet"),
+            ("profitandloss.xlsx", "profitandloss"),
+            ("cashflow.xlsx", "cashflow"),
+            ("documents.xlsx", "documents"),
+            ("prosandcons.xlsx", "prosandcons"),
+            ("analysis.xlsx", "analysis"),
         ]
 
         # ------------------------------------------------------
@@ -456,76 +307,47 @@ class DatabaseLoader:
 
         for excel_file, table_name in files:
 
-            df = self.read_file(
-                excel_file
-            )
+            df = self.read_file(excel_file)
 
-            self.insert_dataframe(
-                table_name,
-                df
-            )
+            self.insert_dataframe(table_name, df)
 
         # ------------------------------------------------------
         # Save load audit
         # ------------------------------------------------------
 
-        audit_df = pd.DataFrame(
-            self.audit
-        )
+        audit_df = pd.DataFrame(self.audit)
 
-        audit_path = (
-            self.output_folder
-            / "load_audit.csv"
-        )
+        audit_path = self.output_folder / "load_audit.csv"
 
-        audit_df.to_csv(
-            audit_path,
-            index=False
-        )
+        audit_df.to_csv(audit_path, index=False)
 
         print()
-        print(
-            "✅ load_audit.csv generated:"
-        )
+        print("✅ load_audit.csv generated:")
 
-        print(
-            audit_path
-        )
+        print(audit_path)
 
         # ------------------------------------------------------
         # Foreign key validation
         # ------------------------------------------------------
 
-        fk_errors = self.conn.execute(
-            "PRAGMA foreign_key_check;"
-        ).fetchall()
+        fk_errors = self.conn.execute("PRAGMA foreign_key_check;").fetchall()
 
-        company_count = self.conn.execute(
-            "SELECT COUNT(*) FROM companies"
-        ).fetchone()[0]
+        company_count = self.conn.execute("SELECT COUNT(*) FROM companies").fetchone()[
+            0
+        ]
 
         print()
-        print(
-            f"Companies in database : "
-            f"{company_count}"
-        )
+        print(f"Companies in database : " f"{company_count}")
 
-        print(
-            f"Foreign key errors : "
-            f"{len(fk_errors)}"
-        )
+        print(f"Foreign key errors : " f"{len(fk_errors)}")
 
         if len(fk_errors) == 0:
 
-            print(
-                "✅ Foreign key check passed."
-            )
+            print("✅ Foreign key check passed.")
 
         else:
 
-            print(
-                "⚠ Foreign key violations detected:"
-            )
+            print("⚠ Foreign key violations detected:")
 
             for error in fk_errors[:20]:
 
@@ -564,29 +386,19 @@ if __name__ == "__main__":
 
         print()
         print("=" * 70)
-        print(
-            "DATABASE LOADING COMPLETED"
-        )
+        print("DATABASE LOADING COMPLETED")
         print("=" * 70)
 
-        print(
-            audit_df.to_string(
-                index=False
-            )
-        )
+        print(audit_df.to_string(index=False))
 
     except Exception as e:
 
         print()
         print("=" * 70)
-        print(
-            "❌ DATABASE LOADING FAILED"
-        )
+        print("❌ DATABASE LOADING FAILED")
         print("=" * 70)
 
-        print(
-            f"{type(e).__name__}: {e}"
-        )
+        print(f"{type(e).__name__}: {e}")
 
         if loader is not None:
 

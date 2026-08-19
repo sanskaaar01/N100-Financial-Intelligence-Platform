@@ -6,7 +6,6 @@ import streamlit as st
 
 from src.dashboard.utils.db import DB_PATH, get_companies
 
-
 st.title("Annual Reports")
 st.caption("Browse available annual reports for Nifty 100 companies.")
 
@@ -23,12 +22,7 @@ if companies.empty:
     st.stop()
 
 
-company_ids = sorted(
-    companies["company_id"]
-    .dropna()
-    .astype(str)
-    .unique()
-)
+company_ids = sorted(companies["company_id"].dropna().astype(str).unique())
 
 
 # ------------------------------------------------------------
@@ -56,8 +50,7 @@ if search.strip():
             search_lower,
             na=False,
         )
-        |
-        filtered["company_name"]
+        | filtered["company_name"]
         .astype(str)
         .str.lower()
         .str.contains(
@@ -69,9 +62,7 @@ if search.strip():
 
 if filtered.empty:
 
-    st.warning(
-        "Ticker not found — please try another."
-    )
+    st.warning("Ticker not found — please try another.")
 
     st.stop()
 
@@ -89,12 +80,11 @@ ticker = st.selectbox(
 # LOAD DOCUMENTS
 # ------------------------------------------------------------
 
+
 @st.cache_data(ttl=600)
 def load_reports(company_id):
 
-    conn = sqlite3.connect(
-        str(DB_PATH)
-    )
+    conn = sqlite3.connect(str(DB_PATH))
 
     try:
 
@@ -124,10 +114,7 @@ reports = load_reports(ticker)
 # COMPANY HEADER
 # ------------------------------------------------------------
 
-company_row = companies[
-    companies["company_id"].astype(str)
-    == str(ticker)
-]
+company_row = companies[companies["company_id"].astype(str) == str(ticker)]
 
 
 if not company_row.empty:
@@ -144,13 +131,9 @@ if not company_row.empty:
         "N/A",
     )
 
-    st.subheader(
-        str(company_name)
-    )
+    st.subheader(str(company_name))
 
-    st.caption(
-        f"{ticker} • {sector}"
-    )
+    st.caption(f"{ticker} • {sector}")
 
 
 # ------------------------------------------------------------
@@ -159,16 +142,12 @@ if not company_row.empty:
 
 if reports.empty:
 
-    st.info(
-        "No annual reports are available for this company."
-    )
+    st.info("No annual reports are available for this company.")
 
     st.stop()
 
 
-st.success(
-    f"{len(reports)} annual report records found."
-)
+st.success(f"{len(reports)} annual report records found.")
 
 
 st.subheader("Available Annual Reports")
@@ -177,6 +156,7 @@ st.subheader("Available Annual Reports")
 # ------------------------------------------------------------
 # URL EXTRACTION
 # ------------------------------------------------------------
+
 
 def extract_url(value):
 
@@ -199,7 +179,6 @@ def extract_url(value):
     if match:
         return match.group(1)
 
-
     # Plain URL fallback
 
     match = re.search(
@@ -212,12 +191,9 @@ def extract_url(value):
         url = match.group(0)
 
         # Remove common trailing characters
-        url = url.rstrip(
-            ")]}>\"'"
-        )
+        url = url.rstrip(")]}>\"'")
 
         return url
-
 
     return None
 
@@ -238,41 +214,25 @@ for _, report in reports.iterrows():
         None,
     )
 
-    url = extract_url(
-        raw_url
-    )
+    url = extract_url(raw_url)
 
+    with st.container(border=True):
 
-    with st.container(
-        border=True
-    ):
-
-        col1, col2, col3 = st.columns(
-            [2, 5, 2]
-        )
-
+        col1, col2, col3 = st.columns([2, 5, 2])
 
         with col1:
 
-            st.markdown(
-                f"### {year}"
-            )
-
+            st.markdown(f"### {year}")
 
         with col2:
 
             if url:
 
-                st.caption(
-                    "BSE annual report available"
-                )
+                st.caption("BSE annual report available")
 
             else:
 
-                st.error(
-                    "Report unavailable"
-                )
-
+                st.error("Report unavailable")
 
         with col3:
 
@@ -286,18 +246,14 @@ for _, report in reports.iterrows():
 
             else:
 
-                st.write(
-                    "Unavailable"
-                )
+                st.write("Unavailable")
 
 
 # ------------------------------------------------------------
 # RAW DATA OPTION
 # ------------------------------------------------------------
 
-with st.expander(
-    "View report data"
-):
+with st.expander("View report data"):
 
     st.dataframe(
         reports,

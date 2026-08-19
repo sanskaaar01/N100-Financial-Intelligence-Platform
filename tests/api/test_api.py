@@ -86,9 +86,7 @@ def test_sectors():
 
 
 def test_information_technology_sector():
-    response = client.get(
-        "/api/v1/sectors/Information%20Technology/companies"
-    )
+    response = client.get("/api/v1/sectors/Information%20Technology/companies")
 
     assert response.status_code == 200
 

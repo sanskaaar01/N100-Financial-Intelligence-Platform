@@ -5,15 +5,14 @@ from statistics import median
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,17 +35,13 @@ GREY = colors.HexColor("#666666")
 # HELPERS
 # ============================================================
 
+
 def clean(value):
 
     if value is None:
         return ""
 
-    return (
-        str(value)
-        .replace("\n", " ")
-        .replace("\r", " ")
-        .strip()
-    )
+    return str(value).replace("\n", " ").replace("\r", " ").strip()
 
 
 def safe_filename(value):
@@ -95,22 +90,21 @@ def median_value(values):
 # LOAD DATA
 # ============================================================
 
+
 def load_data():
 
     conn = sqlite3.connect(DB_PATH)
 
     try:
 
-        companies = conn.execute(
-            """
+        companies = conn.execute("""
             SELECT
                 id,
                 company_name,
                 roe_percentage,
                 roce_percentage
             FROM companies
-            """
-        ).fetchall()
+            """).fetchall()
 
         company_map = {}
 
@@ -123,15 +117,13 @@ def load_data():
                 "roce": row[3],
             }
 
-        peer_rows = conn.execute(
-            """
+        peer_rows = conn.execute("""
             SELECT
                 peer_group_name,
                 company_id
             FROM peer_groups
             ORDER BY peer_group_name, company_id
-            """
-        ).fetchall()
+            """).fetchall()
 
         groups = {}
 
@@ -145,9 +137,7 @@ def load_data():
 
             if company_id in company_map:
 
-                groups[peer_group].append(
-                    company_map[company_id]
-                )
+                groups[peer_group].append(company_map[company_id])
 
         return groups
 
@@ -160,15 +150,13 @@ def load_data():
 # BUILD ONE SECTOR REPORT
 # ============================================================
 
+
 def build_report(
     sector,
     companies,
 ):
 
-    filename = (
-        OUTPUT_DIR
-        / f"{safe_filename(sector)}_report.pdf"
-    )
+    filename = OUTPUT_DIR / f"{safe_filename(sector)}_report.pdf"
 
     doc = SimpleDocTemplate(
         str(filename),
@@ -243,8 +231,7 @@ def build_report(
 
     story.append(
         Paragraph(
-            f"Peer Group Sector Report | "
-            f"{len(companies)} Companies",
+            f"Peer Group Sector Report | " f"{len(companies)} Companies",
             subtitle_style,
         )
     )
@@ -253,15 +240,9 @@ def build_report(
     # MEDIAN KPIs
     # --------------------------------------------------------
 
-    roe_values = [
-        x["roe"]
-        for x in companies
-    ]
+    roe_values = [x["roe"] for x in companies]
 
-    roce_values = [
-        x["roce"]
-        for x in companies
-    ]
+    roce_values = [x["roce"] for x in companies]
 
     summary_data = [
         [
@@ -280,11 +261,7 @@ def build_report(
                 cell_style,
             ),
             Paragraph(
-                number(
-                    median_value(
-                        roe_values
-                    )
-                ),
+                number(median_value(roe_values)),
                 cell_style,
             ),
         ],
@@ -294,11 +271,7 @@ def build_report(
                 cell_style,
             ),
             Paragraph(
-                number(
-                    median_value(
-                        roce_values
-                    )
-                ),
+                number(median_value(roce_values)),
                 cell_style,
             ),
         ],
@@ -407,27 +380,19 @@ def build_report(
         table_data.append(
             [
                 Paragraph(
-                    clean(
-                        company["company_id"]
-                    ),
+                    clean(company["company_id"]),
                     cell_style,
                 ),
                 Paragraph(
-                    clean(
-                        company["company_name"]
-                    ),
+                    clean(company["company_name"]),
                     cell_style,
                 ),
                 Paragraph(
-                    number(
-                        company["roe"]
-                    ),
+                    number(company["roe"]),
                     cell_style,
                 ),
                 Paragraph(
-                    number(
-                        company["roce"]
-                    ),
+                    number(company["roce"]),
                     cell_style,
                 ),
             ]
@@ -540,6 +505,7 @@ def build_report(
 # MAIN
 # ============================================================
 
+
 def main():
 
     groups = load_data()
@@ -552,10 +518,7 @@ def main():
 
     print(
         "Companies represented:",
-        sum(
-            len(x)
-            for x in groups.values()
-        ),
+        sum(len(x) for x in groups.values()),
     )
 
     print(
@@ -583,10 +546,7 @@ def main():
 
     print("Expected groups:")
     for name in sorted(expected):
-        print(
-            f"  - {name}: "
-            f"{len(groups.get(name, []))} companies"
-        )
+        print(f"  - {name}: " f"{len(groups.get(name, []))} companies")
 
     print()
 
@@ -600,9 +560,7 @@ def main():
             sorted(missing),
         )
 
-        raise RuntimeError(
-            "Required peer groups missing"
-        )
+        raise RuntimeError("Required peer groups missing")
 
     if extra:
 
@@ -634,9 +592,7 @@ def main():
         )
 
         if not companies:
-            print(
-                f"SKIP {sector} - no companies"
-            )
+            print(f"SKIP {sector} - no companies")
             continue
 
         path = build_report(
@@ -670,10 +626,7 @@ def main():
 
     if len(generated) != 11:
 
-        raise RuntimeError(
-            f"Expected 11 PDFs, generated "
-            f"{len(generated)}"
-        )
+        raise RuntimeError(f"Expected 11 PDFs, generated " f"{len(generated)}")
 
     print()
     print("✅ 11 sector PDFs generated successfully")

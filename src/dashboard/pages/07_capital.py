@@ -1,12 +1,14 @@
 import sqlite3
-import streamlit as st
+
 import pandas as pd
 import plotly.express as px
+import streamlit as st
 
 from src.dashboard.utils.db import DB_PATH
 
 st.title("Capital Allocation Map")
 st.caption("Nifty 100 companies grouped by capital allocation pattern.")
+
 
 @st.cache_data(ttl=600)
 def load_capital_data():
@@ -48,21 +50,17 @@ def load_capital_data():
 data = load_capital_data()
 
 if data.empty:
-    st.warning(
-        "Capital allocation data is not available yet."
-    )
+    st.warning("Capital allocation data is not available yet.")
     st.stop()
 
 # ------------------------------------------------------------
 # Find cash-flow columns
 # ------------------------------------------------------------
 
+
 def find_column(columns, candidates):
 
-    lower = {
-        str(x).lower(): x
-        for x in columns
-    }
+    lower = {str(x).lower(): x for x in columns}
 
     for candidate in candidates:
         if candidate.lower() in lower:
@@ -126,43 +124,23 @@ if not all([cfo, cfi, cff, company]):
 latest = data.copy()
 
 latest["_year_num"] = (
-    latest["year"]
-    .astype(str)
-    .str.extract(r"(\d{4})")[0]
-    .astype(float)
+    latest["year"].astype(str).str.extract(r"(\d{4})")[0].astype(float)
 )
 
-latest = (
-    latest
-    .sort_values("_year_num")
-    .groupby(company, as_index=False)
-    .tail(1)
-)
+latest = latest.sort_values("_year_num").groupby(company, as_index=False).tail(1)
 
 latest = latest.copy()
 
 latest["cfo_sign"] = latest[cfo].apply(
-    lambda x: "+"
-    if pd.notna(x) and x > 0
-    else "-"
-    if pd.notna(x) and x < 0
-    else "0"
+    lambda x: "+" if pd.notna(x) and x > 0 else "-" if pd.notna(x) and x < 0 else "0"
 )
 
 latest["cfi_sign"] = latest[cfi].apply(
-    lambda x: "+"
-    if pd.notna(x) and x > 0
-    else "-"
-    if pd.notna(x) and x < 0
-    else "0"
+    lambda x: "+" if pd.notna(x) and x > 0 else "-" if pd.notna(x) and x < 0 else "0"
 )
 
 latest["cff_sign"] = latest[cff].apply(
-    lambda x: "+"
-    if pd.notna(x) and x > 0
-    else "-"
-    if pd.notna(x) and x < 0
-    else "0"
+    lambda x: "+" if pd.notna(x) and x > 0 else "-" if pd.notna(x) and x < 0 else "0"
 )
 
 patterns = {
@@ -187,11 +165,7 @@ latest["pattern_label"] = latest.apply(
     axis=1,
 )
 
-summary = (
-    latest["pattern_label"]
-    .value_counts()
-    .reset_index()
-)
+summary = latest["pattern_label"].value_counts().reset_index()
 
 summary.columns = [
     "pattern_label",
@@ -214,21 +188,12 @@ st.plotly_chart(
 
 selected_pattern = st.selectbox(
     "Select Pattern",
-    sorted(
-        latest["pattern_label"]
-        .dropna()
-        .unique()
-    ),
+    sorted(latest["pattern_label"].dropna().unique()),
 )
 
-members = latest[
-    latest["pattern_label"]
-    == selected_pattern
-]
+members = latest[latest["pattern_label"] == selected_pattern]
 
-st.subheader(
-    f"{selected_pattern} — {len(members)} Companies"
-)
+st.subheader(f"{selected_pattern} — {len(members)} Companies")
 
 st.dataframe(
     members[

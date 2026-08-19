@@ -1,8 +1,9 @@
 from pathlib import Path
+
 import pandas as pd
 
-from .database import Database
 from ..etl.loader import ExcelLoader
+from .database import Database
 
 
 class DatabaseLoader:
@@ -30,18 +31,11 @@ class DatabaseLoader:
 
     def insert_dataframe(self, table_name, df):
 
-        df.to_sql(
-            table_name,
-            self.conn,
-            if_exists="append",
-            index=False
-        )
+        df.to_sql(table_name, self.conn, if_exists="append", index=False)
 
-        self.audit.append({
-            "table": table_name,
-            "rows_loaded": len(df),
-            "status": "SUCCESS"
-        })
+        self.audit.append(
+            {"table": table_name, "rows_loaded": len(df), "status": "SUCCESS"}
+        )
 
         print(f"{table_name} -> {len(df)} rows loaded")
 
@@ -60,7 +54,7 @@ class DatabaseLoader:
             ("balancesheet.xlsx", "balancesheet"),
             ("cashflow.xlsx", "cashflow"),
             ("financial_ratios.xlsx", "financial_ratios"),
-            ("stock_prices.xlsx", "stock_prices")
+            ("stock_prices.xlsx", "stock_prices"),
         ]
 
         for excel_file, table_name in files:
@@ -73,10 +67,7 @@ class DatabaseLoader:
 
         audit_df = pd.DataFrame(self.audit)
 
-        audit_df.to_csv(
-            self.output_folder / "load_audit.csv",
-            index=False
-        )
+        audit_df.to_csv(self.output_folder / "load_audit.csv", index=False)
 
         print("\nload_audit.csv generated.")
         print("\nAll files loaded successfully.")

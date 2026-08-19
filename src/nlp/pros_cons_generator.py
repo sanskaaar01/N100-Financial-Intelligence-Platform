@@ -1,7 +1,8 @@
-﻿from pathlib import Path
-import sqlite3
-import pandas as pd
+﻿import sqlite3
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "db" / "nifty100.db"
@@ -123,7 +124,7 @@ def improving(values, count):
     if len(values) < count + 1:
         return False
 
-    values = values[-(count + 1):]
+    values = values[-(count + 1) :]
 
     for a, b in zip(values, values[1:]):
         if pd.isna(a) or pd.isna(b) or b <= a:
@@ -137,7 +138,7 @@ def declining(values, count):
     if len(values) < count + 1:
         return False
 
-    values = values[-(count + 1):]
+    values = values[-(count + 1) :]
 
     for a, b in zip(values, values[1:]):
         if pd.isna(a) or pd.isna(b) or b >= a:
@@ -197,9 +198,7 @@ def generate():
         revenue_cagr = numeric(latest.get("revenue_cagr_5yr"))
         pat_cagr = numeric(latest.get("pat_cagr_5yr"))
         eps_cagr = numeric(latest.get("eps_cagr_5yr"))
-        dividend_payout = numeric(
-            latest.get("dividend_payout_ratio_pct")
-        )
+        dividend_payout = numeric(latest.get("dividend_payout_ratio_pct"))
 
         fcf_values = r["free_cash_flow_cr"].tolist()
         roe_values = r["return_on_equity_pct"].tolist()
@@ -213,15 +212,9 @@ def generate():
         # =====================================================
 
         if consecutive_positive(
-            [
-                numeric(x)
-                for x in r["return_on_equity_pct"].tail(3)
-            ],
+            [numeric(x) for x in r["return_on_equity_pct"].tail(3)],
             3,
-        ) and all(
-            numeric(x) > 20
-            for x in r["return_on_equity_pct"].tail(3)
-        ):
+        ) and all(numeric(x) > 20 for x in r["return_on_equity_pct"].tail(3)):
             add_signal(
                 rows,
                 company_id,
@@ -311,15 +304,8 @@ def generate():
         # ICR > 10 OR debt free
         # =====================================================
 
-        if (
-            (pd.notna(icr) and icr > 10)
-            or (pd.notna(de) and de == 0)
-        ):
-            strength = (
-                icr - 10
-                if pd.notna(icr)
-                else 30
-            )
+        if (pd.notna(icr) and icr > 10) or (pd.notna(de) and de == 0):
+            strength = icr - 10 if pd.notna(icr) else 30
 
             add_signal(
                 rows,
@@ -338,9 +324,7 @@ def generate():
         dividend_yield = np.nan
 
         if not m.empty:
-            dividend_yield = numeric(
-                m.iloc[-1].get("dividend_yield_pct")
-            )
+            dividend_yield = numeric(m.iloc[-1].get("dividend_yield_pct"))
 
         if (
             pd.notna(dividend_yield)
@@ -393,11 +377,7 @@ def generate():
         # PAT CAGR > Revenue CAGR
         # =====================================================
 
-        if (
-            pd.notna(revenue_cagr)
-            and pd.notna(pat_cagr)
-            and pat_cagr > revenue_cagr
-        ):
+        if pd.notna(revenue_cagr) and pd.notna(pat_cagr) and pat_cagr > revenue_cagr:
             add_signal(
                 rows,
                 company_id,
@@ -483,9 +463,7 @@ def generate():
             p = latest_rows(pl, company_id)
 
             if not p.empty:
-                net_profit = numeric(
-                    p.iloc[-1].get("net_profit")
-                )
+                net_profit = numeric(p.iloc[-1].get("net_profit"))
 
         if pd.notna(net_profit) and net_profit < 0:
             add_signal(
@@ -540,10 +518,7 @@ def generate():
         # Dividend payout > 100%
         # =====================================================
 
-        if (
-            pd.notna(dividend_payout)
-            and dividend_payout > 100
-        ):
+        if pd.notna(dividend_payout) and dividend_payout > 100:
             add_signal(
                 rows,
                 company_id,
@@ -616,21 +591,13 @@ def generate():
 
                 latest_p = p.iloc[-1]
 
-                operating_profit = numeric(
-                    latest_p.get("operating_profit")
-                )
+                operating_profit = numeric(latest_p.get("operating_profit"))
 
-                depreciation = numeric(
-                    latest_p.get("depreciation")
-                )
+                depreciation = numeric(latest_p.get("depreciation"))
 
-                borrowings = numeric(
-                    b.iloc[-1].get("borrowings")
-                )
+                borrowings = numeric(b.iloc[-1].get("borrowings"))
 
-                investments = numeric(
-                    b.iloc[-1].get("investments")
-                )
+                investments = numeric(b.iloc[-1].get("investments"))
 
                 if (
                     pd.notna(operating_profit)
@@ -638,10 +605,7 @@ def generate():
                     and pd.notna(borrowings)
                 ):
 
-                    ebitda = (
-                        operating_profit
-                        + max(0, depreciation)
-                    )
+                    ebitda = operating_profit + max(0, depreciation)
 
                     net_debt = borrowings
 
@@ -667,10 +631,7 @@ def generate():
         # Revenue CAGR < 5%
         # =====================================================
 
-        if (
-            pd.notna(revenue_cagr)
-            and revenue_cagr < 5
-        ):
+        if pd.notna(revenue_cagr) and revenue_cagr < 5:
             add_signal(
                 rows,
                 company_id,
@@ -702,19 +663,11 @@ def generate():
 
     for company_id in companies["company_id"].astype(str):
 
-        company_rows = result[
-            result["company_id"].astype(str) == company_id
-        ]
+        company_rows = result[result["company_id"].astype(str) == company_id]
 
-        has_pro = (
-            not company_rows.empty
-            and (company_rows["type"] == "pro").any()
-        )
+        has_pro = not company_rows.empty and (company_rows["type"] == "pro").any()
 
-        has_con = (
-            not company_rows.empty
-            and (company_rows["type"] == "con").any()
-        )
+        has_con = not company_rows.empty and (company_rows["type"] == "con").any()
 
         if not has_pro:
 
@@ -788,27 +741,15 @@ def main():
 
         print()
         print("Signal counts:")
-        print(
-            result["type"]
-            .value_counts()
-            .to_string()
-        )
+        print(result["type"].value_counts().to_string())
 
         print()
         print("Rule counts:")
-        print(
-            result["rule_id"]
-            .value_counts()
-            .to_string()
-        )
+        print(result["rule_id"].value_counts().to_string())
 
         print()
         print("Confidence statistics:")
-        print(
-            result["confidence_pct"]
-            .describe()
-            .to_string()
-        )
+        print(result["confidence_pct"].describe().to_string())
 
     print()
     print("Output:")
@@ -819,10 +760,7 @@ def main():
     print("       VERIFYING 92 COMPANIES")
     print("========================================")
 
-    company_ids = set(
-        companies["company_id"]
-        .astype(str)
-    )
+    company_ids = set(companies["company_id"].astype(str))
 
     pro_ids = set(
         result.loc[
@@ -838,13 +776,9 @@ def main():
         ].astype(str)
     )
 
-    missing_pro = sorted(
-        company_ids - pro_ids
-    )
+    missing_pro = sorted(company_ids - pro_ids)
 
-    missing_con = sorted(
-        company_ids - con_ids
-    )
+    missing_con = sorted(company_ids - con_ids)
 
     print()
     print(
@@ -871,15 +805,9 @@ def main():
     assert len(missing_pro) == 0
     assert len(missing_con) == 0
 
-    assert set(
-        result["type"].unique()
-    ).issubset(
-        {"pro", "con"}
-    )
+    assert set(result["type"].unique()).issubset({"pro", "con"})
 
-    assert (
-        result["confidence_pct"] > 60
-    ).all()
+    assert (result["confidence_pct"] > 60).all()
 
     print()
     print("========================================")

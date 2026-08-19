@@ -1,15 +1,15 @@
 import pytest
 
 from src.analytics.cashflow_kpis import (
-    free_cash_flow,
-    cfo_quality_ratio,
-    cfo_quality_label,
     average_cfo_quality,
+    calculate_cashflow_kpis,
     capex_intensity,
     capex_intensity_label,
-    fcf_conversion_rate,
     capital_allocation_pattern,
-    calculate_cashflow_kpis,
+    cfo_quality_label,
+    cfo_quality_ratio,
+    fcf_conversion_rate,
+    free_cash_flow,
 )
 
 

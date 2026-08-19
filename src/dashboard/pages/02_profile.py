@@ -1,13 +1,12 @@
-import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 
 from src.dashboard.utils.db import (
     get_companies,
-    get_ratios,
     get_pl,
+    get_ratios,
 )
-
 
 st.title("🏢 Company Profile")
 
@@ -29,21 +28,13 @@ if companies.empty:
 
 search_options = []
 
-for _, row in companies.drop_duplicates(
-    subset=["company_id"]
-).iterrows():
+for _, row in companies.drop_duplicates(subset=["company_id"]).iterrows():
 
-    ticker = str(
-        row.get("company_id", "")
-    )
+    ticker = str(row.get("company_id", ""))
 
-    name = str(
-        row.get("company_name", ticker)
-    )
+    name = str(row.get("company_name", ticker))
 
-    search_options.append(
-        f"{ticker} — {name}"
-    )
+    search_options.append(f"{ticker} — {name}")
 
 
 search_options = sorted(search_options)
@@ -62,15 +53,11 @@ ticker = selected_search.split(" — ")[0]
 # COMPANY RECORD
 # ============================================================
 
-company_rows = companies[
-    companies["company_id"].astype(str) == ticker
-]
+company_rows = companies[companies["company_id"].astype(str) == ticker]
 
 if company_rows.empty:
 
-    st.warning(
-        "Ticker not found — please try another"
-    )
+    st.warning("Ticker not found — please try another")
 
     st.stop()
 
@@ -98,9 +85,7 @@ sub_sector = company.get(
 # COMPANY CARD
 # ============================================================
 
-st.subheader(
-    f"{company_name}"
-)
+st.subheader(f"{company_name}")
 
 info1, info2, info3, info4 = st.columns(4)
 
@@ -130,9 +115,7 @@ pl = get_pl(ticker)
 
 
 if ratios.empty:
-    st.warning(
-        "Financial ratio data is not available for this company."
-    )
+    st.warning("Financial ratio data is not available for this company.")
     st.stop()
 
 
@@ -175,38 +158,24 @@ def format_value(
         return str(value)
 
 
-roe = get_value(
-    "return_on_equity_pct"
-)
+roe = get_value("return_on_equity_pct")
 
-roce = get_value(
-    "return_on_capital_employed_pct"
-)
+roce = get_value("return_on_capital_employed_pct")
 
-npm = get_value(
-    "net_profit_margin_pct"
-)
+npm = get_value("net_profit_margin_pct")
 
-de = get_value(
-    "debt_to_equity"
-)
+de = get_value("debt_to_equity")
 
-revenue_cagr = get_value(
-    "revenue_cagr_5yr"
-)
+revenue_cagr = get_value("revenue_cagr_5yr")
 
-fcf = get_value(
-    "free_cash_flow_cr"
-)
+fcf = get_value("free_cash_flow_cr")
 
 
 # ============================================================
 # KPI TILES
 # ============================================================
 
-st.subheader(
-    f"Latest Financial KPIs — {latest.get('year', 'Latest')}"
-)
+st.subheader(f"Latest Financial KPIs — {latest.get('year', 'Latest')}")
 
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 
@@ -293,16 +262,20 @@ if (
     and "net_profit" in pl.columns
 ):
 
-    chart_data = pl[
-        [
-            "year",
-            "sales",
-            "net_profit",
+    chart_data = (
+        pl[
+            [
+                "year",
+                "sales",
+                "net_profit",
+            ]
         ]
-    ].dropna(
-        subset=["sales", "net_profit"],
-        how="all",
-    ).tail(10)
+        .dropna(
+            subset=["sales", "net_profit"],
+            how="all",
+        )
+        .tail(10)
+    )
 
     if not chart_data.empty:
 
@@ -343,14 +316,10 @@ if (
         )
 
     else:
-        st.info(
-            "Insufficient historical P&L data."
-        )
+        st.info("Insufficient historical P&L data.")
 
 else:
-    st.info(
-        "Revenue and net profit history unavailable."
-    )
+    st.info("Revenue and net profit history unavailable.")
 
 
 # ============================================================
@@ -363,56 +332,38 @@ chart_ratios = ratios.tail(10).copy()
 
 if "return_on_equity_pct" in chart_ratios.columns:
 
-    chart_ratios[
-        "return_on_equity_pct"
-    ] = pd.to_numeric(
-        chart_ratios[
-            "return_on_equity_pct"
-        ],
+    chart_ratios["return_on_equity_pct"] = pd.to_numeric(
+        chart_ratios["return_on_equity_pct"],
         errors="coerce",
     )
 
 if "return_on_capital_employed_pct" in chart_ratios.columns:
 
-    chart_ratios[
-        "return_on_capital_employed_pct"
-    ] = pd.to_numeric(
-        chart_ratios[
-            "return_on_capital_employed_pct"
-        ],
+    chart_ratios["return_on_capital_employed_pct"] = pd.to_numeric(
+        chart_ratios["return_on_capital_employed_pct"],
         errors="coerce",
     )
 
 
-if (
-    "year" in chart_ratios.columns
-    and "return_on_equity_pct" in chart_ratios.columns
-):
+if "year" in chart_ratios.columns and "return_on_equity_pct" in chart_ratios.columns:
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
             x=chart_ratios["year"],
-            y=chart_ratios[
-                "return_on_equity_pct"
-            ],
+            y=chart_ratios["return_on_equity_pct"],
             mode="lines+markers",
             name="ROE",
         )
     )
 
-    if (
-        "return_on_capital_employed_pct"
-        in chart_ratios.columns
-    ):
+    if "return_on_capital_employed_pct" in chart_ratios.columns:
 
         fig.add_trace(
             go.Scatter(
                 x=chart_ratios["year"],
-                y=chart_ratios[
-                    "return_on_capital_employed_pct"
-                ],
+                y=chart_ratios["return_on_capital_employed_pct"],
                 mode="lines+markers",
                 name="ROCE",
                 yaxis="y2",
@@ -444,9 +395,7 @@ if (
     )
 
 else:
-    st.info(
-        "ROE / ROCE history unavailable."
-    )
+    st.info("ROE / ROCE history unavailable.")
 
 
 # ============================================================
@@ -462,13 +411,9 @@ cons = []
 if roe is not None:
     try:
         if float(roe) >= 15:
-            pros.append(
-                f"ROE is strong at {float(roe):.2f}%."
-            )
+            pros.append(f"ROE is strong at {float(roe):.2f}%.")
         elif float(roe) < 10:
-            cons.append(
-                f"ROE is relatively low at {float(roe):.2f}%."
-            )
+            cons.append(f"ROE is relatively low at {float(roe):.2f}%.")
     except Exception:
         pass
 
@@ -476,13 +421,9 @@ if roe is not None:
 if de is not None:
     try:
         if float(de) < 1:
-            pros.append(
-                f"Low leverage with D/E of {float(de):.2f}."
-            )
+            pros.append(f"Low leverage with D/E of {float(de):.2f}.")
         elif float(de) > 5:
-            cons.append(
-                f"High leverage with D/E of {float(de):.2f}."
-            )
+            cons.append(f"High leverage with D/E of {float(de):.2f}.")
     except Exception:
         pass
 
@@ -490,9 +431,7 @@ if de is not None:
 if revenue_cagr is not None:
     try:
         if float(revenue_cagr) >= 10:
-            pros.append(
-                f"Strong 5-year revenue CAGR of {float(revenue_cagr):.2f}%."
-            )
+            pros.append(f"Strong 5-year revenue CAGR of {float(revenue_cagr):.2f}%.")
     except Exception:
         pass
 
@@ -500,38 +439,26 @@ if revenue_cagr is not None:
 if fcf is not None:
     try:
         if float(fcf) > 0:
-            pros.append(
-                "Latest free cash flow is positive."
-            )
+            pros.append("Latest free cash flow is positive.")
         else:
-            cons.append(
-                "Latest free cash flow is negative."
-            )
+            cons.append("Latest free cash flow is negative.")
     except Exception:
         pass
 
 
 if not pros:
-    pros.append(
-        "No major positive signal available."
-    )
+    pros.append("No major positive signal available.")
 
 if not cons:
-    cons.append(
-        "No major negative signal identified."
-    )
+    cons.append("No major negative signal identified.")
 
 
 left, right = st.columns(2)
 
 with left:
     for item in pros:
-        st.success(
-            f"✓ {item}"
-        )
+        st.success(f"✓ {item}")
 
 with right:
     for item in cons:
-        st.error(
-            f"✗ {item}"
-        )
+        st.error(f"✗ {item}")

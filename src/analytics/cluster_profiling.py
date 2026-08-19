@@ -1,11 +1,9 @@
 ﻿import sqlite3
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "db" / "nifty100.db"
@@ -38,50 +36,31 @@ def load_cluster_data():
     df = pd.read_csv(CLUSTER_PATH)
 
     if len(df) != 92:
-        raise RuntimeError(
-            f"Expected 92 companies in KMeans output, found {len(df)}"
-        )
+        raise RuntimeError(f"Expected 92 companies in KMeans output, found {len(df)}")
 
     return df
 
 
 def profile_clusters(df):
     """Calculate mean and median values for the five clusters."""
-    available = [
-        col for col in FEATURES
-        if col in df.columns
-    ]
+    available = [col for col in FEATURES if col in df.columns]
 
     if len(available) != 5:
-        raise RuntimeError(
-            f"Expected all 5 clustering features. Found: {available}"
-        )
+        raise RuntimeError(f"Expected all 5 clustering features. Found: {available}")
 
     mean_profile = (
-        df.groupby(
-            ["cluster", "cluster_name"],
-            dropna=False
-        )[available]
-        .mean()
-        .round(3)
+        df.groupby(["cluster", "cluster_name"], dropna=False)[available].mean().round(3)
     )
 
     median_profile = (
-        df.groupby(
-            ["cluster", "cluster_name"],
-            dropna=False
-        )[available]
+        df.groupby(["cluster", "cluster_name"], dropna=False)[available]
         .median()
         .round(3)
     )
 
-    mean_output = (
-        ROOT / "output" / "cluster_profile_mean.csv"
-    )
+    mean_output = ROOT / "output" / "cluster_profile_mean.csv"
 
-    median_output = (
-        ROOT / "output" / "cluster_profile_median.csv"
-    )
+    median_output = ROOT / "output" / "cluster_profile_median.csv"
 
     mean_profile.to_csv(mean_output)
     median_profile.to_csv(median_output)
@@ -138,10 +117,7 @@ def create_correlation_heatmap():
         "composite_quality_score",
     ]
 
-    available = [
-        c for c in numeric_columns
-        if c in ratios.columns
-    ]
+    available = [c for c in numeric_columns if c in ratios.columns]
 
     data = ratios[available].apply(
         pd.to_numeric,
@@ -156,13 +132,9 @@ def create_correlation_heatmap():
         exist_ok=True,
     )
 
-    output_path = (
-        reports_dir / "correlation_heatmap.png"
-    )
+    output_path = reports_dir / "correlation_heatmap.png"
 
-    plt.figure(
-        figsize=(12, 9)
-    )
+    plt.figure(figsize=(12, 9))
 
     plt.imshow(
         corr,
@@ -172,9 +144,7 @@ def create_correlation_heatmap():
         vmax=1,
     )
 
-    plt.colorbar(
-        label="Correlation"
-    )
+    plt.colorbar(label="Correlation")
 
     plt.xticks(
         range(len(corr.columns)),
@@ -188,9 +158,7 @@ def create_correlation_heatmap():
         corr.index,
     )
 
-    plt.title(
-        "Financial Ratio Correlation Heatmap"
-    )
+    plt.title("Financial Ratio Correlation Heatmap")
 
     plt.tight_layout()
 
@@ -203,6 +171,7 @@ def create_correlation_heatmap():
     plt.close()
 
     return corr
+
 
 def create_outlier_report():
     """Detect KPI outliers using sector-level absolute Z-score above three."""
@@ -225,27 +194,16 @@ def create_outlier_report():
 
     conn.close()
 
-    ratios["year_sort"] = (
-        ratios["year"]
-        .astype(str)
-        .str.extract(r"(\d{4})")[0]
-    )
+    ratios["year_sort"] = ratios["year"].astype(str).str.extract(r"(\d{4})")[0]
 
     ratios["year_sort"] = pd.to_numeric(
         ratios["year_sort"],
         errors="coerce",
     )
 
-    ratios = ratios.sort_values(
-        ["company_id", "year_sort"]
-    )
+    ratios = ratios.sort_values(["company_id", "year_sort"])
 
-    latest = (
-        ratios
-        .groupby("company_id", as_index=False)
-        .tail(1)
-        .copy()
-    )
+    latest = ratios.groupby("company_id", as_index=False).tail(1).copy()
 
     latest = latest.merge(
         companies,
@@ -269,10 +227,7 @@ def create_outlier_report():
         "composite_quality_score",
     ]
 
-    available = [
-        c for c in metrics
-        if c in latest.columns
-    ]
+    available = [c for c in metrics if c in latest.columns]
 
     records = []
 
@@ -283,37 +238,19 @@ def create_outlier_report():
             errors="coerce",
         )
 
-        latest[f"{metric}_z"] = (
-            latest
-            .groupby("broad_sector")[metric]
-            .transform(
-                lambda s:
+        latest[f"{metric}_z"] = latest.groupby("broad_sector")[metric].transform(
+            lambda s: (
                 (
-                    pd.to_numeric(
-                        s,
-                        errors="coerce"
-                    ) - pd.to_numeric(
-                        s,
-                        errors="coerce"
-                    ).mean()
+                    pd.to_numeric(s, errors="coerce")
+                    - pd.to_numeric(s, errors="coerce").mean()
                 )
-                /
-                pd.to_numeric(
-                    s,
-                    errors="coerce"
-                ).std(ddof=0)
-                if pd.to_numeric(
-                    s,
-                    errors="coerce"
-                ).std(ddof=0) not in [0, np.nan]
+                / pd.to_numeric(s, errors="coerce").std(ddof=0)
+                if pd.to_numeric(s, errors="coerce").std(ddof=0) not in [0, np.nan]
                 else np.nan
             )
         )
 
-    z_columns = [
-        f"{metric}_z"
-        for metric in available
-    ]
+    z_columns = [f"{metric}_z" for metric in available]
 
     for _, row in latest.iterrows():
 
@@ -390,27 +327,16 @@ def create_portfolio_stats():
 
     conn.close()
 
-    ratios["year_sort"] = (
-        ratios["year"]
-        .astype(str)
-        .str.extract(r"(\d{4})")[0]
-    )
+    ratios["year_sort"] = ratios["year"].astype(str).str.extract(r"(\d{4})")[0]
 
     ratios["year_sort"] = pd.to_numeric(
         ratios["year_sort"],
         errors="coerce",
     )
 
-    ratios = ratios.sort_values(
-        ["company_id", "year_sort"]
-    )
+    ratios = ratios.sort_values(["company_id", "year_sort"])
 
-    latest = (
-        ratios
-        .groupby("company_id", as_index=False)
-        .tail(1)
-        .copy()
-    )
+    latest = ratios.groupby("company_id", as_index=False).tail(1).copy()
 
     metrics = [
         "net_profit_margin_pct",
@@ -425,10 +351,7 @@ def create_portfolio_stats():
         "composite_quality_score",
     ]
 
-    available = [
-        c for c in metrics
-        if c in latest.columns
-    ]
+    available = [c for c in metrics if c in latest.columns]
 
     rows = []
 
@@ -487,11 +410,7 @@ def main():
 
     print()
     print("Cluster distribution:")
-    print(
-        df["cluster_name"]
-        .value_counts()
-        .to_string()
-    )
+    print(df["cluster_name"].value_counts().to_string())
 
     print()
     print("[1] Profiling clusters...")

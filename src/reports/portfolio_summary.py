@@ -1,20 +1,20 @@
-﻿from pathlib import Path
-import sqlite3
-import pandas as pd
-import numpy as np
+﻿import sqlite3
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,11 +72,7 @@ def latest_two(df, value_col):
 
     latest = float(values.iloc[-1])
 
-    previous = (
-        float(values.iloc[-2])
-        if len(values) >= 2
-        else np.nan
-    )
+    previous = float(values.iloc[-2]) if len(values) >= 2 else np.nan
 
     return latest, previous
 
@@ -158,17 +154,11 @@ def load_inputs():
 
 
 def build_company_kpis(company_id, ratios, pnl, cashflow):
-    r = ratios[
-        ratios["company_id"].astype(str) == str(company_id)
-    ].copy()
+    r = ratios[ratios["company_id"].astype(str) == str(company_id)].copy()
 
-    p = pnl[
-        pnl["company_id"].astype(str) == str(company_id)
-    ].copy()
+    p = pnl[pnl["company_id"].astype(str) == str(company_id)].copy()
 
-    cf = cashflow[
-        cashflow["company_id"].astype(str) == str(company_id)
-    ].copy()
+    cf = cashflow[cashflow["company_id"].astype(str) == str(company_id)].copy()
 
     roe, roe_prev = latest_two(
         r,
@@ -277,11 +267,7 @@ def kpi_table(kpis, styles):
     cells = []
 
     for name, value, arrow in kpis:
-        arrow_color = (
-            GREEN if arrow == "↑"
-            else RED if arrow == "↓"
-            else GREY
-        )
+        arrow_color = GREEN if arrow == "↑" else RED if arrow == "↓" else GREY
 
         content = [
             Paragraph(name, styles["KPIName"]),
@@ -387,13 +373,11 @@ def build_pdf():
 
     for index, company in companies.reset_index(drop=True).iterrows():
         company_id = str(company["company_id"])
-        company_name = str(
-            company.get("company_name", company_id)
-        ).replace("\n", " ").strip()
+        company_name = (
+            str(company.get("company_name", company_id)).replace("\n", " ").strip()
+        )
 
-        sector = str(
-            company.get("sector", "Unknown")
-        ).replace("\n", " ").strip()
+        sector = str(company.get("sector", "Unknown")).replace("\n", " ").strip()
 
         story.append(
             Paragraph(

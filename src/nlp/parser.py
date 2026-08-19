@@ -1,7 +1,7 @@
-﻿from pathlib import Path
+﻿import re
 import sqlite3
-import re
-import csv
+from pathlib import Path
+
 import pandas as pd
 
 # ============================================================
@@ -40,6 +40,7 @@ FIELDS = {
 # DATABASE
 # ============================================================
 
+
 def get_connection():
     if not DB_PATH.exists():
         raise FileNotFoundError(f"Database not found: {DB_PATH}")
@@ -50,6 +51,7 @@ def get_connection():
 # ============================================================
 # PARSER
 # ============================================================
+
 
 def parse_value(text):
     if text is None:
@@ -74,6 +76,7 @@ def parse_value(text):
 # ============================================================
 # MAIN ENGINE
 # ============================================================
+
 
 def run_parser():
 
@@ -113,21 +116,25 @@ def run_parser():
 
                 period_years, value_pct = result
 
-                parsed_rows.append({
-                    "company_id": company_id,
-                    "metric_type": metric_type,
-                    "period_years": period_years,
-                    "value_pct": value_pct,
-                })
+                parsed_rows.append(
+                    {
+                        "company_id": company_id,
+                        "metric_type": metric_type,
+                        "period_years": period_years,
+                        "value_pct": value_pct,
+                    }
+                )
 
             else:
 
-                failure_rows.append({
-                    "company_id": company_id,
-                    "metric_type": metric_type,
-                    "raw_value": "" if pd.isna(raw_value) else str(raw_value),
-                    "reason": "Pattern did not match N Years: X%",
-                })
+                failure_rows.append(
+                    {
+                        "company_id": company_id,
+                        "metric_type": metric_type,
+                        "raw_value": "" if pd.isna(raw_value) else str(raw_value),
+                        "reason": "Pattern did not match N Years: X%",
+                    }
+                )
 
     parsed_df = pd.DataFrame(
         parsed_rows,
@@ -177,20 +184,11 @@ def run_parser():
     if not parsed_df.empty:
         print()
         print("Metrics:")
-        print(
-            parsed_df["metric_type"]
-            .value_counts()
-            .to_string()
-        )
+        print(parsed_df["metric_type"].value_counts().to_string())
 
         print()
         print("Periods:")
-        print(
-            parsed_df["period_years"]
-            .value_counts()
-            .sort_index()
-            .to_string()
-        )
+        print(parsed_df["period_years"].value_counts().sort_index().to_string())
 
     print()
     print(f"Parsed output: {PARSED_FILE}")
@@ -200,9 +198,7 @@ def run_parser():
     print("Sample parsed rows:")
 
     if not parsed_df.empty:
-        print(
-            parsed_df.head(10).to_string(index=False)
-        )
+        print(parsed_df.head(10).to_string(index=False))
     else:
         print("No rows parsed.")
 
@@ -210,9 +206,7 @@ def run_parser():
     print("Sample failures:")
 
     if not failure_df.empty:
-        print(
-            failure_df.head(10).to_string(index=False)
-        )
+        print(failure_df.head(10).to_string(index=False))
     else:
         print("No parse failures.")
 

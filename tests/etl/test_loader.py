@@ -1,9 +1,7 @@
-
 import sqlite3
 from pathlib import Path
 
 import pytest
-
 
 DB = Path("db/nifty100.db")
 
@@ -32,9 +30,7 @@ def conn():
     ],
 )
 def test_table_row_count(conn, table, minimum):
-    count = conn.execute(
-        f"SELECT COUNT(*) FROM {table}"
-    ).fetchone()[0]
+    count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
 
     assert count >= minimum
 
@@ -55,12 +51,7 @@ def test_table_row_count(conn, table, minimum):
     ],
 )
 def test_required_columns(conn, table, required):
-    columns = {
-        row[1]
-        for row in conn.execute(
-            f"PRAGMA table_info({table})"
-        ).fetchall()
-    }
+    columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
 
     for column in required:
         assert column in columns

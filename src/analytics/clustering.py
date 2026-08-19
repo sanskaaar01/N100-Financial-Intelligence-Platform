@@ -1,5 +1,6 @@
-﻿from pathlib import Path
-import sqlite3
+﻿import sqlite3
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -76,67 +77,42 @@ def calculate_fcf_cagr(group):
         errors="coerce",
     )
 
-    g = g.dropna(
-        subset=["free_cash_flow_cr"]
-    )
+    g = g.dropna(subset=["free_cash_flow_cr"])
 
     if len(g) < 6:
         return np.nan
 
     # Remove duplicate year records.
-    g = (
-        g.groupby("year", as_index=False)
-        ["free_cash_flow_cr"]
-        .mean()
-    )
+    g = g.groupby("year", as_index=False)["free_cash_flow_cr"].mean()
 
     # Extract numeric year.
     g["year_num"] = pd.to_numeric(
-        g["year"]
-        .astype(str)
-        .str.extract(r"(\d{4})")[0],
+        g["year"].astype(str).str.extract(r"(\d{4})")[0],
         errors="coerce",
     )
 
-    g = g.sort_values(
-        ["year_num", "year"]
-    )
+    g = g.sort_values(["year_num", "year"])
 
     if len(g) < 6:
         return np.nan
 
-    first = num(
-        g.iloc[-6]["free_cash_flow_cr"]
-    )
+    first = num(g.iloc[-6]["free_cash_flow_cr"])
 
-    latest = num(
-        g.iloc[-1]["free_cash_flow_cr"]
-    )
+    latest = num(g.iloc[-1]["free_cash_flow_cr"])
 
     # CAGR is undefined when FCF is
     # zero or negative.
-    if (
-        pd.isna(first)
-        or pd.isna(latest)
-        or first <= 0
-        or latest <= 0
-    ):
+    if pd.isna(first) or pd.isna(latest) or first <= 0 or latest <= 0:
         return np.nan
 
-    return (
-        (latest / first) ** (1 / 5) - 1
-    ) * 100
+    return ((latest / first) ** (1 / 5) - 1) * 100
 
 
 def build_features(companies, ratios):
 
     rows = []
 
-    ratio_company_ids = set(
-        ratios["company_id"]
-        .astype(str)
-        .unique()
-    )
+    ratio_company_ids = set(ratios["company_id"].astype(str).unique())
 
     print()
     print(
@@ -151,10 +127,7 @@ def build_features(companies, ratios):
 
     for company_id in companies["company_id"].astype(str):
 
-        r = ratios[
-            ratios["company_id"].astype(str)
-            == company_id
-        ].copy()
+        r = ratios[ratios["company_id"].astype(str) == company_id].copy()
 
         # ----------------------------------------------------
         # IMPORTANT:
@@ -166,13 +139,9 @@ def build_features(companies, ratios):
 
         if r.empty:
 
-            print(
-                f"WARNING - No ratio data for {company_id}"
-            )
+            print(f"WARNING - No ratio data for {company_id}")
 
-            row = {
-                "company_id": company_id
-            }
+            row = {"company_id": company_id}
 
             for column in FEATURE_COLUMNS:
                 row[column] = np.nan
@@ -182,99 +151,33 @@ def build_features(companies, ratios):
             continue
 
         # Remove duplicate company/year records.
-        r = r.drop_duplicates(
-            subset=["company_id", "year"]
-        ).copy()
+        r = r.drop_duplicates(subset=["company_id", "year"]).copy()
 
         # Determine latest year.
         r["year_num"] = pd.to_numeric(
-            r["year"]
-            .astype(str)
-            .str.extract(r"(\d{4})")[0],
+            r["year"].astype(str).str.extract(r"(\d{4})")[0],
             errors="coerce",
         )
 
-        r = r.sort_values(
-            ["year_num", "year"]
-        )
+        r = r.sort_values(["year_num", "year"])
 
         latest = r.iloc[-1]
 
         row = {
             "company_id": company_id,
-
-            "net_profit_margin_pct":
-                num(
-                    latest.get(
-                        "net_profit_margin_pct"
-                    )
-                ),
-
-            "operating_profit_margin_pct":
-                num(
-                    latest.get(
-                        "operating_profit_margin_pct"
-                    )
-                ),
-
-            "return_on_equity_pct":
-                num(
-                    latest.get(
-                        "return_on_equity_pct"
-                    )
-                ),
-
-            "debt_to_equity":
-                num(
-                    latest.get(
-                        "debt_to_equity"
-                    )
-                ),
-
-            "interest_coverage":
-                num(
-                    latest.get(
-                        "interest_coverage"
-                    )
-                ),
-
-            "asset_turnover":
-                num(
-                    latest.get(
-                        "asset_turnover"
-                    )
-                ),
-
-            "revenue_cagr_5yr":
-                num(
-                    latest.get(
-                        "revenue_cagr_5yr"
-                    )
-                ),
-
-            "pat_cagr_5yr":
-                num(
-                    latest.get(
-                        "pat_cagr_5yr"
-                    )
-                ),
-
-            "eps_cagr_5yr":
-                num(
-                    latest.get(
-                        "eps_cagr_5yr"
-                    )
-                ),
-
-            "fcf_cagr_5yr":
-                calculate_fcf_cagr(r),
-
-            "composite_quality_score":
-                num(
-                    latest.get(
-                        "composite_quality_score"
-                    )
-                ),
+            "net_profit_margin_pct": num(latest.get("net_profit_margin_pct")),
+            "operating_profit_margin_pct": num(
+                latest.get("operating_profit_margin_pct")
+            ),
+            "return_on_equity_pct": num(latest.get("return_on_equity_pct")),
+            "debt_to_equity": num(latest.get("debt_to_equity")),
+            "interest_coverage": num(latest.get("interest_coverage")),
+            "asset_turnover": num(latest.get("asset_turnover")),
+            "revenue_cagr_5yr": num(latest.get("revenue_cagr_5yr")),
+            "pat_cagr_5yr": num(latest.get("pat_cagr_5yr")),
+            "eps_cagr_5yr": num(latest.get("eps_cagr_5yr")),
+            "fcf_cagr_5yr": calculate_fcf_cagr(r),
+            "composite_quality_score": num(latest.get("composite_quality_score")),
         }
 
         rows.append(row)
@@ -284,9 +187,7 @@ def build_features(companies, ratios):
 
 def prepare_features(features):
 
-    X = features[
-        FEATURE_COLUMNS
-    ].copy()
+    X = features[FEATURE_COLUMNS].copy()
 
     X = X.replace(
         [np.inf, -np.inf],
@@ -301,24 +202,18 @@ def prepare_features(features):
         if pd.isna(median):
             median = 0.0
 
-        X[column] = X[column].fillna(
-            median
-        )
+        X[column] = X[column].fillna(median)
 
     return X
 
 
 def run_kmeans(features):
 
-    X = prepare_features(
-        features
-    )
+    X = prepare_features(features)
 
     scaler = StandardScaler()
 
-    X_scaled = scaler.fit_transform(
-        X
-    )
+    X_scaled = scaler.fit_transform(X)
 
     model = KMeans(
         n_clusters=5,
@@ -326,32 +221,19 @@ def run_kmeans(features):
         n_init=20,
     )
 
-    labels = model.fit_predict(
-        X_scaled
-    )
+    labels = model.fit_predict(X_scaled)
 
     result = features.copy()
 
     result["cluster"] = labels
 
-    distances = model.transform(
-        X_scaled
-    )
+    distances = model.transform(X_scaled)
 
-    result["cluster_distance"] = [
-        distances[i, labels[i]]
-        for i in range(len(labels))
-    ]
+    result["cluster_distance"] = [distances[i, labels[i]] for i in range(len(labels))]
 
     # Cluster naming based on average
     # composite quality score.
-    quality = (
-        result
-        .groupby("cluster")
-        ["composite_quality_score"]
-        .mean()
-        .sort_values()
-    )
+    quality = result.groupby("cluster")["composite_quality_score"].mean().sort_values()
 
     names = [
         "Value / Lower Quality",
@@ -363,17 +245,11 @@ def run_kmeans(features):
 
     cluster_names = {}
 
-    for rank, cluster_id in enumerate(
-        quality.index
-    ):
+    for rank, cluster_id in enumerate(quality.index):
 
-        cluster_names[
-            cluster_id
-        ] = names[rank]
+        cluster_names[cluster_id] = names[rank]
 
-    result["cluster_name"] = result[
-        "cluster"
-    ].map(cluster_names)
+    result["cluster_name"] = result["cluster"].map(cluster_names)
 
     return result
 
@@ -392,36 +268,21 @@ def main():
     companies, ratios = load_data()
 
     print()
-    print(
-        "Companies loaded:",
-        len(companies)
-    )
+    print("Companies loaded:", len(companies))
 
-    print(
-        "Ratio rows:",
-        len(ratios)
-    )
+    print("Ratio rows:", len(ratios))
 
     if len(companies) != 92:
 
-        raise RuntimeError(
-            f"Expected 92 companies, "
-            f"found {len(companies)}"
-        )
+        raise RuntimeError(f"Expected 92 companies, " f"found {len(companies)}")
 
     print()
     print("Building features...")
 
-    features = build_features(
-        companies,
-        ratios
-    )
+    features = build_features(companies, ratios)
 
     print()
-    print(
-        "Feature rows:",
-        len(features)
-    )
+    print("Feature rows:", len(features))
 
     # --------------------------------------------------------
     # HARD QA BEFORE KMEANS
@@ -429,9 +290,7 @@ def main():
 
     if len(features) != 92:
 
-        missing = set(
-            companies["company_id"].astype(str)
-        ) - set(
+        missing = set(companies["company_id"].astype(str)) - set(
             features["company_id"].astype(str)
         )
 
@@ -441,9 +300,7 @@ def main():
             f"Missing: {sorted(missing)}"
         )
 
-    print(
-        "PASS - All 92 companies have feature rows"
-    )
+    print("PASS - All 92 companies have feature rows")
 
     print()
     print("Features used:")
@@ -454,9 +311,7 @@ def main():
     print()
     print("Standardizing features...")
 
-    result = run_kmeans(
-        features
-    )
+    result = run_kmeans(features)
 
     # --------------------------------------------------------
     # ADD COMPANY NAMES
@@ -481,9 +336,7 @@ def main():
             "cluster_name",
         ]
         + FEATURE_COLUMNS
-        + [
-            "cluster_distance"
-        ]
+        + ["cluster_distance"]
     ]
 
     # --------------------------------------------------------
@@ -506,28 +359,12 @@ def main():
     print("       CLUSTER DISTRIBUTION")
     print("========================================")
 
-    print(
-        result[
-            "cluster_name"
-        ]
-        .value_counts()
-        .to_string()
-    )
+    print(result["cluster_name"].value_counts().to_string())
 
     print()
-    print(
-        "Companies clustered:",
-        result[
-            "company_id"
-        ].nunique()
-    )
+    print("Companies clustered:", result["company_id"].nunique())
 
-    print(
-        "Clusters:",
-        result[
-            "cluster"
-        ].nunique()
-    )
+    print("Clusters:", result["cluster"].nunique())
 
     print()
     print("Excel:")
@@ -548,19 +385,9 @@ def main():
 
     assert len(result) == 92
 
-    assert (
-        result[
-            "company_id"
-        ].nunique()
-        == 92
-    )
+    assert result["company_id"].nunique() == 92
 
-    assert (
-        result[
-            "cluster"
-        ].nunique()
-        == 5
-    )
+    assert result["cluster"].nunique() == 5
 
     assert OUTPUT_XLSX.exists()
     assert OUTPUT_CSV.exists()

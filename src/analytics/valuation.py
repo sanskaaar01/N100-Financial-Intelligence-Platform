@@ -1,8 +1,8 @@
-﻿from pathlib import Path
-import sqlite3
-import pandas as pd
-import numpy as np
+﻿import sqlite3
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
 
 # ============================================================
 # CONFIG
@@ -20,6 +20,7 @@ FLAGS_FILE = OUTPUT_DIR / "valuation_flags.csv"
 # DATABASE
 # ============================================================
 
+
 def get_connection():
     return sqlite3.connect(str(DB_PATH))
 
@@ -27,6 +28,7 @@ def get_connection():
 # ============================================================
 # LOAD DATA
 # ============================================================
+
 
 def load_data():
 
@@ -95,6 +97,7 @@ def load_data():
 # LATEST MARKET DATA
 # ============================================================
 
+
 def latest_market_data(market_cap):
 
     df = market_cap.copy()
@@ -104,9 +107,7 @@ def latest_market_data(market_cap):
         errors="coerce",
     )
 
-    df = df.sort_values(
-        ["company_id", "year_num"]
-    )
+    df = df.sort_values(["company_id", "year_num"])
 
     df = (
         df.groupby(
@@ -124,6 +125,7 @@ def latest_market_data(market_cap):
 # LATEST FCF
 # ============================================================
 
+
 def latest_fcf(ratios):
 
     df = ratios.copy()
@@ -133,9 +135,7 @@ def latest_fcf(ratios):
         errors="coerce",
     )
 
-    df = df.sort_values(
-        ["company_id", "year_num"]
-    )
+    df = df.sort_values(["company_id", "year_num"])
 
     df = (
         df.groupby(
@@ -158,6 +158,7 @@ def latest_fcf(ratios):
 # BUILD VALUATION DATA
 # ============================================================
 
+
 def build_valuation():
 
     (
@@ -167,21 +168,15 @@ def build_valuation():
         peers,
     ) = load_data()
 
-    latest_market = latest_market_data(
-        market_cap
-    )
+    latest_market = latest_market_data(market_cap)
 
-    latest_cashflow = latest_fcf(
-        ratios
-    )
+    latest_cashflow = latest_fcf(ratios)
 
     # --------------------------------------------------------
     # Remove duplicate peer assignments
     # --------------------------------------------------------
 
-    peers = peers.drop_duplicates(
-        subset=["company_id"]
-    )
+    peers = peers.drop_duplicates(subset=["company_id"])
 
     # --------------------------------------------------------
     # Merge
@@ -209,10 +204,7 @@ def build_valuation():
     # Clean sector
     # --------------------------------------------------------
 
-    df["broad_sector"] = (
-        df["broad_sector"]
-        .fillna("Unknown")
-    )
+    df["broad_sector"] = df["broad_sector"].fillna("Unknown")
 
     # --------------------------------------------------------
     # Numeric conversion
@@ -239,10 +231,7 @@ def build_valuation():
 
     df["fcf_yield_pct"] = np.where(
         df["market_cap_crore"] > 0,
-        (
-            df["free_cash_flow_cr"]
-            / df["market_cap_crore"]
-        ) * 100,
+        (df["free_cash_flow_cr"] / df["market_cap_crore"]) * 100,
         np.nan,
     )
 
@@ -258,9 +247,7 @@ def build_valuation():
             ]
         ]
         .dropna(subset=["pe_ratio"])
-        .groupby("broad_sector")[
-            "pe_ratio"
-        ]
+        .groupby("broad_sector")["pe_ratio"]
         .median()
         .rename("5yr_median_PE")
         .reset_index()
@@ -277,16 +264,8 @@ def build_valuation():
     # --------------------------------------------------------
 
     df["PE_vs_sector_median_pct"] = np.where(
-        (
-            df["5yr_median_PE"].notna()
-            & (df["5yr_median_PE"] != 0)
-        ),
-        (
-            (
-                df["pe_ratio"]
-                / df["5yr_median_PE"]
-            ) - 1
-        ) * 100,
+        (df["5yr_median_PE"].notna() & (df["5yr_median_PE"] != 0)),
+        ((df["pe_ratio"] / df["5yr_median_PE"]) - 1) * 100,
         np.nan,
     )
 
@@ -364,6 +343,7 @@ def build_valuation():
 # SAVE OUTPUTS
 # ============================================================
 
+
 def save_outputs():
 
     OUTPUT_DIR.mkdir(
@@ -406,51 +386,29 @@ def save_outputs():
     print("DAY 26 - VALUATION MODULE")
     print("=" * 60)
 
-    print(
-        f"Companies: {len(result)}"
-    )
+    print(f"Companies: {len(result)}")
 
-    print(
-        f"Caution: {(result['flag'] == 'Caution').sum()}"
-    )
+    print(f"Caution: {(result['flag'] == 'Caution').sum()}")
 
-    print(
-        f"Discount: {(result['flag'] == 'Discount').sum()}"
-    )
+    print(f"Discount: {(result['flag'] == 'Discount').sum()}")
 
-    print(
-        f"Fair: {(result['flag'] == 'Fair').sum()}"
-    )
+    print(f"Fair: {(result['flag'] == 'Fair').sum()}")
 
     print()
-    print(
-        f"Excel: {SUMMARY_FILE}"
-    )
+    print(f"Excel: {SUMMARY_FILE}")
 
-    print(
-        f"CSV:   {FLAGS_FILE}"
-    )
+    print(f"CSV:   {FLAGS_FILE}")
 
     print()
-    print(
-        "Required columns:"
-    )
+    print("Required columns:")
 
-    print(
-        result.columns.tolist()
-    )
+    print(result.columns.tolist())
 
     print()
-    print(
-        result.head(10).to_string(
-            index=False
-        )
-    )
+    print(result.head(10).to_string(index=False))
 
     print()
-    print(
-        "✅ DAY 26 VALUATION COMPLETE"
-    )
+    print("✅ DAY 26 VALUATION COMPLETE")
 
 
 # ============================================================

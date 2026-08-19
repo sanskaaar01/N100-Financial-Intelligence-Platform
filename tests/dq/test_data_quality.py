@@ -3,7 +3,6 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-
 DB_PATH = Path("db/nifty100.db")
 SCREENER_FILE = Path("output/screener_output.xlsx")
 PEER_FILE = Path("output/peer_comparison.xlsx")
@@ -18,6 +17,7 @@ def get_connection():
 # 1. DATABASE EXISTS
 # ============================================================
 
+
 def test_database_exists():
     assert DB_PATH.exists(), "SQLite database does not exist"
 
@@ -26,18 +26,17 @@ def test_database_exists():
 # 2. FINANCIAL RATIOS TABLE EXISTS
 # ============================================================
 
+
 def test_financial_ratios_table_exists():
     conn = get_connection()
 
     try:
-        result = conn.execute(
-            """
+        result = conn.execute("""
             SELECT name
             FROM sqlite_master
             WHERE type = 'table'
               AND name = 'financial_ratios'
-            """
-        ).fetchone()
+            """).fetchone()
     finally:
         conn.close()
 
@@ -48,13 +47,12 @@ def test_financial_ratios_table_exists():
 # 3. FINANCIAL RATIOS ROW COUNT
 # ============================================================
 
+
 def test_financial_ratios_row_count():
     conn = get_connection()
 
     try:
-        count = conn.execute(
-            "SELECT COUNT(*) FROM financial_ratios"
-        ).fetchone()[0]
+        count = conn.execute("SELECT COUNT(*) FROM financial_ratios").fetchone()[0]
     finally:
         conn.close()
 
@@ -64,6 +62,7 @@ def test_financial_ratios_row_count():
 # ============================================================
 # 4. REQUIRED KPI COLUMNS EXIST
 # ============================================================
+
 
 def test_required_kpi_columns_exist():
     required = {
@@ -91,23 +90,20 @@ def test_required_kpi_columns_exist():
     try:
         columns = {
             row[1]
-            for row in conn.execute(
-                "PRAGMA table_info(financial_ratios)"
-            ).fetchall()
+            for row in conn.execute("PRAGMA table_info(financial_ratios)").fetchall()
         }
     finally:
         conn.close()
 
     missing = required - columns
 
-    assert not missing, (
-        f"Missing KPI columns: {sorted(missing)}"
-    )
+    assert not missing, f"Missing KPI columns: {sorted(missing)}"
 
 
 # ============================================================
 # 5. KPI COLUMNS ARE NOT COMPLETELY NULL
 # ============================================================
+
 
 def test_kpi_columns_not_null_only():
     columns = [
@@ -129,22 +125,16 @@ def test_kpi_columns_not_null_only():
     conn = get_connection()
 
     try:
-        total = conn.execute(
-            "SELECT COUNT(*) FROM financial_ratios"
-        ).fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM financial_ratios").fetchone()[0]
 
         for column in columns:
-            populated = conn.execute(
-                f"""
+            populated = conn.execute(f"""
                 SELECT COUNT(*)
                 FROM financial_ratios
                 WHERE "{column}" IS NOT NULL
-                """
-            ).fetchone()[0]
+                """).fetchone()[0]
 
-            assert populated > 0, (
-                f"{column} is completely NULL"
-            )
+            assert populated > 0, f"{column} is completely NULL"
 
             assert populated <= total
     finally:
@@ -155,12 +145,12 @@ def test_kpi_columns_not_null_only():
 # 6. COMPOSITE QUALITY SCORE RANGE
 # ============================================================
 
+
 def test_composite_quality_score_range():
     conn = get_connection()
 
     try:
-        invalid = conn.execute(
-            """
+        invalid = conn.execute("""
             SELECT COUNT(*)
             FROM financial_ratios
             WHERE composite_quality_score IS NOT NULL
@@ -168,8 +158,7 @@ def test_composite_quality_score_range():
                     composite_quality_score < 0
                     OR composite_quality_score > 100
                   )
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -180,18 +169,17 @@ def test_composite_quality_score_range():
 # 7. DEBT TO EQUITY IS NOT NEGATIVE
 # ============================================================
 
+
 def test_debt_to_equity_non_negative():
     conn = get_connection()
 
     try:
-        invalid = conn.execute(
-            """
+        invalid = conn.execute("""
             SELECT COUNT(*)
             FROM financial_ratios
             WHERE debt_to_equity IS NOT NULL
               AND debt_to_equity < 0
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -202,16 +190,15 @@ def test_debt_to_equity_non_negative():
 # 8. PEER GROUP COUNT
 # ============================================================
 
+
 def test_peer_group_count():
     conn = get_connection()
 
     try:
-        count = conn.execute(
-            """
+        count = conn.execute("""
             SELECT COUNT(DISTINCT peer_group_name)
             FROM peer_groups
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -222,16 +209,15 @@ def test_peer_group_count():
 # 9. PEER PERCENTILE ROW COUNT
 # ============================================================
 
+
 def test_peer_percentile_row_count():
     conn = get_connection()
 
     try:
-        count = conn.execute(
-            """
+        count = conn.execute("""
             SELECT COUNT(*)
             FROM peer_percentiles
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -242,12 +228,12 @@ def test_peer_percentile_row_count():
 # 10. PEER PERCENTILES VALID RANGE
 # ============================================================
 
+
 def test_peer_percentiles_valid_range():
     conn = get_connection()
 
     try:
-        invalid = conn.execute(
-            """
+        invalid = conn.execute("""
             SELECT COUNT(*)
             FROM peer_percentiles
             WHERE percentile_rank IS NOT NULL
@@ -255,8 +241,7 @@ def test_peer_percentiles_valid_range():
                     percentile_rank < 0
                     OR percentile_rank > 1
                   )
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -267,16 +252,15 @@ def test_peer_percentiles_valid_range():
 # 11. TEN PEER METRICS
 # ============================================================
 
+
 def test_peer_metric_count():
     conn = get_connection()
 
     try:
-        count = conn.execute(
-            """
+        count = conn.execute("""
             SELECT COUNT(DISTINCT metric)
             FROM peer_percentiles
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
     finally:
         conn.close()
 
@@ -287,38 +271,34 @@ def test_peer_metric_count():
 # 12. EVERY PEER GROUP HAS COMPANIES
 # ============================================================
 
+
 def test_every_peer_group_has_companies():
     conn = get_connection()
 
     try:
-        rows = conn.execute(
-            """
+        rows = conn.execute("""
             SELECT
                 peer_group_name,
                 COUNT(DISTINCT company_id)
             FROM peer_groups
             GROUP BY peer_group_name
-            """
-        ).fetchall()
+            """).fetchall()
     finally:
         conn.close()
 
     assert len(rows) == 11
 
     for group_name, company_count in rows:
-        assert company_count > 0, (
-            f"Peer group {group_name} has no companies"
-        )
+        assert company_count > 0, f"Peer group {group_name} has no companies"
 
 
 # ============================================================
 # 13. PEER COMPARISON WORKBOOK
 # ============================================================
 
+
 def test_peer_comparison_workbook():
-    assert PEER_FILE.exists(), (
-        "peer_comparison.xlsx does not exist"
-    )
+    assert PEER_FILE.exists(), "peer_comparison.xlsx does not exist"
 
     workbook = load_workbook(
         PEER_FILE,
@@ -347,10 +327,9 @@ def test_peer_comparison_workbook():
 # 14. SCREENER + RADAR OUTPUTS
 # ============================================================
 
+
 def test_screener_and_radar_outputs():
-    assert SCREENER_FILE.exists(), (
-        "screener_output.xlsx does not exist"
-    )
+    assert SCREENER_FILE.exists(), "screener_output.xlsx does not exist"
 
     workbook = load_workbook(
         SCREENER_FILE,
@@ -368,15 +347,10 @@ def test_screener_and_radar_outputs():
 
     assert set(workbook.sheetnames) == expected_sheets
 
-    assert RADAR_DIR.exists(), (
-        "Radar chart directory does not exist"
-    )
+    assert RADAR_DIR.exists(), "Radar chart directory does not exist"
 
-    radar_files = list(
-        RADAR_DIR.glob("*_radar.png")
-    )
+    radar_files = list(RADAR_DIR.glob("*_radar.png"))
 
     assert len(radar_files) >= 90, (
-        f"Expected at least 90 radar charts, "
-        f"found {len(radar_files)}"
+        f"Expected at least 90 radar charts, " f"found {len(radar_files)}"
     )
